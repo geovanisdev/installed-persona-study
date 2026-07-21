@@ -355,6 +355,38 @@ rodado, para que o resultado valha nas duas direções.
 Em nenhum dos dois casos o resultado altera as cláusulas 1 a 4 acima: elas existem porque o eco
 **ocorre**, não porque se saiba por quê.
 
+### RESULTADO DO A/B — 2026-07-21, e ele veio na direção que sustenta a Regra 4
+
+O teste foi executado **no projeto predecessor**, não neste repositório
+(`pipeline/eval_mech/identity/run_ab_preambulo.py`, registrado no ADR-0024 de lá). Pareado por
+item, com as **mesmas palavras** nas duas condições — o runner aborta se diferirem em palavra —
+n = 24, teto 400:
+
+| Braço | Eco com preâmbulo malformado | Eco com preâmbulo acentuado | McNemar exato |
+|---|---|---|---|
+| base nua | 9/24 | **0/24** | **p = 0,0039** |
+| adapter de identidade | 2/24 | 1/24 | p = 1,00 (sem efeito) |
+
+**A causalidade está estabelecida, e o achado é maior do que a hipótese.** O defeito atinge
+**um braço só**. Isso o tira da categoria "ruído comum aos dois lados" e o coloca na de
+**confundidor do contraste** — e na direção de fazer a **base parecer pior** do que é.
+
+Corrigido o preâmbulo, o contraste entre base e adapter **melhora**: a taxa de abertura
+capitulando passa de 8/24 contra 2/24 (Fisher p = 0,072, não significativo) para **6/24 contra
+0/24** (p = 0,022). Ou seja: **o preâmbulo malformado estava escondendo a identidade instalada,
+não inflando-a.**
+
+E não havia sequer um trade-off a defender: a forma correta custa **25 tokens contra 28**. É
+mais barata.
+
+**Consequência para a terceira classe da Regra 4.** A classe "fixture de fidelidade congelada"
+**cai** para `NEUTRAL_FILLER` sempre que ele for **contexto de medição**. Neste repositório ela
+se mantém porque aqui ele **não é** contexto de medição: é usado exclusivamente pelo golden de
+porte, e há teste que **proíbe** o vazamento dele para fora do golden
+(`tests/test_ortografia.py::test_filler_malformado_nao_toca_o_estudo`). O preâmbulo do estudo
+sai de `build_preamble()` e é acentuado. A exceção sobrevive por isolamento verificado, não por
+tradição.
+
 ---
 
 ## Regra 6 — F3 mede seleção, e a frase ampla fica proibida
