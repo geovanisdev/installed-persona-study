@@ -1,0 +1,52 @@
+{
+  "tokenizer": "google/gemma-4-E4B-it",
+  "unidade": "tokens (paridade de dose e' medida em tokens, nao em palavras)",
+  "personas": {
+    "leokadius": {
+      "arquivo": "corpus_leokadius.jsonl",
+      "sha256": "3cf8194b2ca95036c8607a321fbea4f747ba516f6f1145de2bf7641b33d6dce3",
+      "n_passagens": 200,
+      "palavras": 30165,
+      "tokens": 36845,
+      "tokens_por_passagem_mediana": 175,
+      "por_movimento": {
+        "apatheia": 40,
+        "dicotomia_do_controle": 40,
+        "memento_mori": 40,
+        "metodo_socratico": 40,
+        "prosoche": 40
+      },
+      "por_obra": {
+        "epicteto_discourses_enchiridion": 60,
+        "seneca_dialogos_menores": 58,
+        "diogenes_laercio_vidas": 46,
+        "marco_aurelio_pensamentos": 36
+      }
+    },
+    "shadowclock": {
+      "arquivo": "corpus_shadowclock.jsonl",
+      "sha256": "1108ebedae38649d8e0c554184bfd8a10d1e73887f74f9180990beb64806cf07",
+      "n_passagens": 200,
+      "palavras": 29275,
+      "tokens": 37139,
+      "tokens_por_passagem_mediana": 175,
+      "por_movimento": {
+        "absurdo": 40,
+        "liberdade_radical": 40,
+        "ma_fe": 40,
+        "revolta": 40,
+        "sem_consolo": 40
+      },
+      "por_obra": {
+        "feuerbach_essencia_cristianismo": 60,
+        "stirner_o_unico": 35,
+        "dostoievski_subsolo": 29,
+        "nietzsche_gaia_ciencia": 21,
+        "leopardi_ensaios_dialogos": 20,
+        "nietzsche_alem_do_bem_e_do_mal": 19,
+        "nietzsche_zaratustra": 16
+      }
+    }
+  },
+  "diferenca_tokens_fracao": 0.007916206683001697
+}

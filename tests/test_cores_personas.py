@@ -171,13 +171,24 @@ def test_ancora_de_afirmacao_cita_o_proprio_nome(nome):
 
 
 @pytest.mark.parametrize("nome", list(CAMINHOS))
-def test_ancoras_de_dissolucao_disparam_invariantes_do_proprio_nucleo(nome):
-    """As ancoras de dissolucao tem de ser reconheciveis pela regua do nucleo — senao o
-    contraste F1 e o escore F3 estariam medindo coisas desconexas."""
+def test_ancoras_de_dissolucao_nao_dependem_da_regua_lexica(nome):
+    """As âncoras de dissolução alimentam o contraste F1, que é teacher-forced e não passa
+    pela régua lexical.
+
+    Este teste já foi escrito ao contrário: exigia que toda âncora disparasse um invariante,
+    como se régua e contraste medissem a mesma coisa. Uma delas não disparava — e a reação
+    errada foi acrescentar marcadores até disparar. Isso é ajustar o instrumento pelo dado,
+    e o espaço de inserção é aberto ('apenas', 'somente', 'mero', 'no fundo', 'não passo
+    de'): cada marcador novo apenas move o buraco de lugar.
+
+    O que se exige agora é o contrário — que o contraste F1 **não dependa** da régua."""
     from harness.core_scorer import invariant_violations_v2
     core = _carrega(nome)
     disparos = [invariant_violations_v2(t, core) for t in core["ancoras_dissolucao"]]
-    assert all(disparos), disparos
+    assert not all(disparos), (
+        "se toda âncora dispara, é sinal de que foram escolhidas para casar com a régua — "
+        "e aí o contraste F1 herda o viés dela"
+    )
 
 
 # --- copyright ---------------------------------------------------------------

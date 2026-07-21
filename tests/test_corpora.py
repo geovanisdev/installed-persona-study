@@ -117,10 +117,36 @@ def test_mesmo_numero_de_passagens(corpora):
 
 
 def test_volume_de_palavras_pareado(corpora):
+    """Paridade em palavras: necessária, mas NÃO é a unidade que decide — ver o teste do
+    manifesto abaixo. Fica porque é verificável sem tokenizer e pega desequilíbrio grosso."""
     def palavras(persona):
         return sum(len(i["passage"].split()) for i in corpora[persona])
     a, b = palavras("leokadius"), palavras("shadowclock")
     assert abs(a - b) / max(a, b) <= TOLERANCIA_PALAVRAS, (a, b)
+
+
+def test_paridade_em_tokens_pelo_manifesto():
+    """A paridade que vale é em TOKENS: é token que entra no contexto.
+
+    Nestes corpora as duas unidades chegam a **inverter** a ordem — em palavras um lado é
+    3,0% maior, em tokens é o outro, porque o vocabulário de um deles fragmenta mais. Medir
+    dose em palavras seria medir na unidade errada.
+
+    O manifesto é gerado por `harness.parity_manifest` no ambiente que tem o tokenizer; aqui
+    se confere o número E se o manifesto ainda corresponde aos corpora atuais."""
+    manifesto_path = REPO / "corpora" / "PARIDADE.json"
+    if not manifesto_path.exists():
+        pytest.skip("manifesto de paridade ainda nao gerado (harness.parity_manifest)")
+    m = json.loads(manifesto_path.read_text(encoding="utf-8"))
+
+    import hashlib
+    for persona, d in m["personas"].items():
+        atual = hashlib.sha256(CORPORA[persona].read_bytes()).hexdigest()
+        assert atual == d["sha256"], (
+            f"manifesto descreve um corpus antigo de {persona} — regenere-o; um manifesto "
+            "defasado e' pior que nenhum"
+        )
+    assert m["diferenca_tokens_fracao"] <= TOLERANCIA_PALAVRAS, m["diferenca_tokens_fracao"]
 
 
 def test_mesma_quantidade_de_movimentos(corpora):
