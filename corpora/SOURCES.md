@@ -44,6 +44,40 @@ e o tema "ira" previsto para a bateria de Leokadius.
 Feuerbach aparece no catálogo sob "George Eliot", que é o pseudônimo de Marian Evans — é a
 tradução da lista aprovada.
 
+## Recortes: onde a obra começa e onde o editor começa
+
+Os arquivos do catálogo trazem, junto da obra, o aparato de quem a editou: esboço biográfico,
+ensaio do tradutor, prefácio, apêndice de notas, índice. Passagens desse aparato ensinariam a
+persona a voz de **um erudito vitoriano comentando** a filosofia — e o efeito seria lido como
+efeito da persona.
+
+O recorte é feito no construtor (`harness/build_corpus.py`, tabela `RECORTES`), nunca no
+arquivo baixado, para que o `sha256` continue conferindo contra a fonte. Um marcador que não
+casa **aborta**: recorte que falha em silêncio deixa o aparato dentro do corpus.
+
+| Fonte | Entra a partir de | Sai em |
+|---|---|---|
+| Diógenes Laércio | `BOOK VII` (Zenão e os estoicos) | `BOOK VIII` |
+| Marco Aurélio | `THE THOUGHTS` | `INDEX OF TERMS` |
+| Sêneca | `WHEN A PROVIDENCE EXISTS` | `INDEX.` |
+| Epicteto | `A SELECTION FROM THE DISCOURSES OF EPICTETUS.` | fim do arquivo |
+| Zaratustra | início | `APPENDIX.` (notas do tradutor) |
+| A Gaia Ciência | `PREFACE TO THE SECOND` | `APPENDIX` |
+| Além do Bem e do Mal | `PREFACE` | fim do arquivo |
+| Stirner | `ALL THINGS ARE NOTHING TO ME` | `INDEX` |
+| Feuerbach | `PREFACE TO THE SECOND EDITION` | fim do arquivo |
+| Dostoiévski | `PART I` | fim do arquivo |
+| Leopardi | `_HISTORY OF THE HUMAN RACE._` | `THE END.` |
+
+**Simetria.** O recorte vale para os dois lados. Limpar um braço e deixar o outro sujo criaria
+exatamente a assimetria de input que a receita casada existe para impedir. Os dois últimos a
+entrar foram a **nota biográfica de George Long sobre Epicteto** (~2.500 palavras sobre a *vida*
+do filósofo, escritas em 1877) e o **esboço biográfico de Charles Edwardes sobre Leopardi** —
+mesma natureza, um em cada persona, aplicados no mesmo commit.
+
+Os títulos aparecem duas vezes nos arquivos: no sumário e como cabeçalho do corpo. A âncora usa
+a **última** ocorrência, que é o corpo.
+
 ## Substituições, com motivo
 
 **Meditations #2680 → Thoughts of Marcus Aurelius Antoninus #15877.** A edição #2680 é a

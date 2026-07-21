@@ -86,6 +86,11 @@ RECORTES: dict[str, tuple[str | None, str | None]] = {
     "diogenes_laercio_vidas": (r"BOOK\s+VII\b", r"BOOK\s+VIII\b"),          # so' Zenao/estoicos
     "marco_aurelio_pensamentos": (r"(?m)^THE THOUGHTS\s*$", r"(?m)^INDEX OF TERMS"),
     "seneca_dialogos_menores": (r"WHEN A PROVIDENCE EXISTS", r"(?m)^INDEX\.\s*$"),
+    # A nota biografica de Long sobre Epicteto (~2.500 palavras de erudicao vitoriana sobre
+    # a VIDA do filosofo) precede a obra. O titulo aparece duas vezes: no sumario, indentado,
+    # e como cabecalho do corpo — a ancora de inicio de linha pega so' o segundo.
+    "epicteto_discourses_enchiridion": (
+        r"(?m)^A SELECTION FROM THE DISCOURSES OF EPICTETUS\.\s*$", None),
     # Shadowclock
     "nietzsche_zaratustra": (None, r"(?m)^APPENDIX\."),                     # apendice = notas do tradutor
     "nietzsche_gaia_ciencia": (r"PREFACE TO THE SECOND", r"(?m)^\s*APPENDIX\s*$"),
@@ -93,9 +98,10 @@ RECORTES: dict[str, tuple[str | None, str | None]] = {
     "stirner_o_unico": (r"ALL THINGS ARE NOTHING TO ME", r"(?m)^INDEX\s*$"),
     "feuerbach_essencia_cristianismo": (r"(?m)^PREFACE TO THE SECOND EDITION", None),
     "dostoievski_subsolo": (r"(?m)^PART I\s*$", None),
-    # SEM recorte ainda, e por isso declarados: a nota biografica de Long em Epicteto e o
-    # esboco biografico de Edwardes em Leopardi continuam no arquivo. Sao curtos perto do
-    # corpo da obra, mas a limpeza esta' pendente.
+    # O esboco biografico de Edwardes sobre Leopardi tem a mesma natureza da nota de Long:
+    # um tradutor do sec. XIX contando a vida do autor. Fica de fora pelos dois lados.
+    "leopardi_ensaios_dialogos": (r"(?m)^_HISTORY OF THE HUMAN RACE\._",
+                                  r"(?m)^THE END\.\s*$"),
 }
 
 _NOISE = re.compile(

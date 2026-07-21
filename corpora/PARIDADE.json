@@ -4,10 +4,10 @@
   "personas": {
     "leokadius": {
       "arquivo": "corpus_leokadius.jsonl",
-      "sha256": "3cf8194b2ca95036c8607a321fbea4f747ba516f6f1145de2bf7641b33d6dce3",
+      "sha256": "ec000b5c9cfcc4e3405856775e8bd6d0dd03d35dda4f96c9e91c0be697e49524",
       "n_passagens": 200,
-      "palavras": 30165,
-      "tokens": 36845,
+      "palavras": 30164,
+      "tokens": 36841,
       "tokens_por_passagem_mediana": 175,
       "por_movimento": {
         "apatheia": 40,
@@ -48,5 +48,5 @@
       }
     }
   },
-  "diferenca_tokens_fracao": 0.007916206683001697
+  "diferenca_tokens_fracao": 0.008023910175287434
 }
