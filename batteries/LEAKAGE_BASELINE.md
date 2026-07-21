@@ -82,13 +82,25 @@ família mediria concordância de família, não persona.
 São plausíveis, não empíricos. Isso limita a generalização e está declarado aqui em vez de
 implícito.
 
-## Registro de forma: português sem acentos
+## Registro de forma: a decisão de ortografia foi exercida
 
-Os prompts seguem a convenção herdada do pipeline de origem — português escrito sem acentuação.
-A convenção não foi escolhida agora: os preâmbulos das personas, montados a partir de
-`superficie_postura` nos núcleos, já são assim, e misturar as duas formas faria o modelo receber
-preâmbulo numa ortografia e item em outra.
+Esta seção dizia, até 2026-07-21, que os prompts seguiam a convenção herdada do pipeline de
+origem — português **sem** acentuação — e terminava oferecendo a reversão: *"se o Arquiteto
+preferir português acentuado, é agora."*
 
-Fica registrado como decisão **reversível até o selo** e cara depois dele: reescrever núcleos,
-corpora e bancos com acentuação é barato hoje e invalidaria a cadeia de hashes depois. Se o
-Arquiteto preferir português acentuado, é agora.
+**O Arquiteto preferiu, a reversão foi feita, e a seção ficou para trás.** Os 42 itens deste
+banco estão acentuados (41 deles contêm ao menos uma palavra acentuada; o restante não tem
+nenhuma palavra que exija acento). O texto acima descrevia um artefato que já não existia.
+
+Fica o registro de que isto foi encontrado numa releitura, e não por um teste: **nenhuma guarda
+compara a prosa de um documento com o arquivo que ele descreve.** O `tests/test_ortografia.py`
+verifica a acentuação dos itens — o que ele não podia verificar era um `.md` afirmando o oposto.
+É o modo de falha mais barato de produzir e o mais caro de detectar: cada peça está correta
+isoladamente, e a contradição só aparece para quem lê as duas.
+
+A regra que passou a valer está em `PREREGISTRATION.md`, Regra 4: texto de **estudo** é acentuado
+sempre; **chave de casamento** (`viola_se`) fica na forma normalizada, porque acentuada nunca
+casaria; **fixture de fidelidade** fica congelada na forma da origem, e só enquanto for golden
+publicado e não contexto de medição. E a Regra 5 registra o A/B que deu à decisão justificativa
+causal, e não apenas estética: com o preâmbulo acentuado, o eco de preâmbulo na base nua caiu de
+9/24 para 0/24 (McNemar exato, p = 0,0039).
