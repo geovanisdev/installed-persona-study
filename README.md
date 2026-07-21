@@ -4,6 +4,11 @@ A **pre-registered, public, confirmatory study** on whether a persona can be *in
 weights* of a small open language model via QLoRA — and, if so, what exactly gets installed:
 the **name**, the **stance**, or both.
 
+> **Start here / comece por aqui:** [`docs/ESTADO-DO-ESTUDO.html`](docs/ESTADO-DO-ESTUDO.html) —
+> a plain-language state of the study, **bilingual (PT/EN via a toggle)**, offline single file.
+> It says what is built, what was tried and failed, what is still open, and who decides each
+> open question. Download and open it in a browser; GitHub does not render HTML inline.
+
 Two personas are trained under a matched recipe and measured against each other and against the
 untouched base model:
 

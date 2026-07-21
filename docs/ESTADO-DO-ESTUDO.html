@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-slot="titulo">Installed Persona Study — state of the study — 2026-07-21</title>
+<!--
+  TEMPLATE CANÔNICO: Estado do Projeto / Explicador Leigo (Tier 1, ADR 0007).
+  Herda DESIGN_SYSTEM.html. Single-file, zero rede (D5). DUAS FACES (D8):
+   - Aba "Explicador": fotografia panorâmica do projeto em LINGUAGEM LEIGA —
+     zero sigla sem expansão, zero jargão sem definição; mesmos fatos dos
+     relatórios técnicos, outra linguagem. Vereditos com vocabulário fixo:
+     funcionou / não funcionou / dividido / em teste.
+   - Aba "Machine-Readable": schema fixo p/ a próxima sessão/explicador levantar.
+  Nasceu do modelo "GomesARCH · Estado do projeto · 12 jul 2026" (pedido do Arquiteto).
+  data-skel="fixo" = esqueleto/schema (nunca regenerado).
+  data-slot = preenchido pela Skill B do contexto real do projeto.
+-->
+<style data-skel="fixo">
+  :root{--paper:#faf8f4;--paper-sunk:#f1eee7;--ink:#1c1b18;--ink-soft:#4a4843;--ink-faint:#8a877f;--rule:#d9d4c8;--rule-strong:#b8b2a3;--accent:#2f5d57;--accent-soft:#e4ece9;--ok:#3f6b3a;--ok-bg:#e8efe5;--warn:#8a6d1f;--warn-bg:#f4ecd6;--danger:#9c3a32;--danger-bg:#f3e0dd;--info:#355c7a;--info-bg:#e1e9ef;--neutral:#5c5a53;--neutral-bg:#eceae3;--serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,Cambria,"Times New Roman",serif;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"Cascadia Code","Source Code Pro",Menlo,Consolas,"DejaVu Sans Mono",monospace;--t-xs:.75rem;--t-sm:.875rem;--t-base:1rem;--t-md:1.25rem;--t-lg:1.5625rem;--t-xl:1.953rem;--t-xxl:2.441rem;--s1:.25rem;--s2:.5rem;--s3:.75rem;--s4:1rem;--s5:1.5rem;--s6:2rem;--s7:3rem;--s8:4rem;--measure:74ch;--radius:3px}
+  @media (prefers-color-scheme:dark){:root{--paper:#16150f;--paper-sunk:#1f1d16;--ink:#ece8df;--ink-soft:#b9b4a6;--ink-faint:#807c70;--rule:#33302a;--rule-strong:#4a463c;--accent:#7fb3aa;--accent-soft:#1d2b29;--ok:#8fb886;--ok-bg:#1b251a;--warn:#cdae6a;--warn-bg:#2a2415;--danger:#d28a82;--danger-bg:#2c1916;--info:#8fb2cc;--info-bg:#15222b;--neutral:#a8a59c;--neutral-bg:#23211b}}
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:var(--t-base);line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:var(--s6) var(--s5) var(--s8)}
+  .measure{max-width:var(--measure)}
+  .doc-head{border-bottom:2px solid var(--ink);padding-bottom:var(--s4);margin-bottom:var(--s5)}
+  .doc-kicker{font-family:var(--sans);font-size:var(--t-xs);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 var(--s2)}
+  .doc-title{font-size:var(--t-xxl);line-height:1.15;margin:0 0 var(--s3);font-weight:600}
+  .doc-meta{font-family:var(--sans);font-size:var(--t-sm);color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);margin:0}
+  .doc-meta b{color:var(--ink);font-weight:600}
+  .canon{font-family:var(--sans);font-size:var(--t-sm);margin-top:var(--s3)}
+  .canon a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-soft)}
+  .canon a:hover{border-bottom-color:var(--accent)}
+  h2{font-size:var(--t-xl);font-weight:600;margin:var(--s7) 0 var(--s3);line-height:1.2}
+  h3{font-size:var(--t-lg);font-weight:600;margin:var(--s5) 0 var(--s3)}
+  h4{font-family:var(--sans);font-size:var(--t-base);font-weight:700;margin:var(--s4) 0 var(--s2)}
+  p{margin:0 0 var(--s4)}
+  code,kbd{font-family:var(--mono);font-size:.92em;background:var(--paper-sunk);padding:.1em .35em;border-radius:var(--radius)}
+  .tabs{margin:var(--s5) 0}
+  .tab-strip{display:flex;flex-wrap:wrap;gap:var(--s1);border-bottom:1px solid var(--rule-strong);font-family:var(--sans)}
+  .tab-btn{appearance:none;background:none;border:none;cursor:pointer;font:inherit;font-size:var(--t-sm);font-weight:600;color:var(--ink-faint);padding:var(--s2) var(--s4);border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tab-btn:hover{color:var(--ink)}
+  .tab-btn[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-btn.machine{margin-left:auto;color:var(--neutral)}
+  .tab-btn.machine[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+  .tab-panel{padding:var(--s5) 0}
+  .tab-panel[hidden]{display:none}
+  .lang-bar{display:flex;align-items:center;gap:var(--s2);margin:0 0 var(--s4);font-family:var(--sans)}
+  .lang-bar .lang-lbl{color:var(--ink-faint);font-size:var(--t-xs);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .lang-btn{appearance:none;cursor:pointer;font:inherit;font-size:var(--t-sm);font-weight:600;background:none;color:var(--ink-faint);border:1px solid var(--rule);border-radius:100px;padding:.2em .9em}
+  .lang-btn:hover{color:var(--ink);border-color:var(--rule-strong)}
+  .lang-btn[aria-pressed="true"]{color:#fff;background:var(--accent);border-color:var(--accent)}
+  [data-lang="pt"] .lang-en,[data-lang="en"] .lang-pt{display:none}
+  .badge{font-family:var(--sans);font-size:var(--t-xs);font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:.15em .6em;border-radius:100px;display:inline-block;line-height:1.6}
+  .badge.ok{color:var(--ok);background:var(--ok-bg)}.badge.warn{color:var(--warn);background:var(--warn-bg)}.badge.danger{color:var(--danger);background:var(--danger-bg)}.badge.info{color:var(--info);background:var(--info-bg)}.badge.neutral{color:var(--neutral);background:var(--neutral-bg)}
+  table.grid{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:var(--t-sm);margin:var(--s4) 0}
+  table.grid caption{text-align:left;font-size:var(--t-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);padding-bottom:var(--s2)}
+  table.grid th{text-align:left;font-weight:700;color:var(--ink);border-bottom:2px solid var(--rule-strong);padding:var(--s2) var(--s3)}
+  table.grid td{border-bottom:1px solid var(--rule);padding:var(--s2) var(--s3);vertical-align:top}
+  table.grid tr:hover td{background:var(--paper-sunk)}
+  .callout{border-left:3px solid var(--rule-strong);background:var(--paper-sunk);padding:var(--s3) var(--s4);margin:var(--s4) 0;border-radius:0 var(--radius) var(--radius) 0}
+  .callout .lbl{font-family:var(--sans);font-size:var(--t-xs);font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:var(--s1)}
+  .callout.note{border-color:var(--info)}.callout.note .lbl{color:var(--info)}
+  .callout.warn{border-color:var(--warn)}.callout.warn .lbl{color:var(--warn)}
+  .callout.danger{border-color:var(--danger)}.callout.danger .lbl{color:var(--danger)}
+  .callout p:last-child{margin-bottom:0}
+  details.diff{border:1px solid var(--rule);border-radius:var(--radius);margin:var(--s4) 0;overflow:hidden}
+  details.diff>summary{font-family:var(--sans);font-size:var(--t-sm);font-weight:600;padding:var(--s2) var(--s4);cursor:pointer;background:var(--paper-sunk);list-style:none}
+  details.diff>summary::-webkit-details-marker{display:none}
+  details.diff>summary::before{content:"▸ ";color:var(--ink-faint)}
+  details.diff[open]>summary::before{content:"▾ "}
+  .diff pre{margin:0;font-family:var(--mono);font-size:var(--t-sm);line-height:1.55;overflow-x:auto}
+  .diff pre .add{background:var(--ok-bg);color:var(--ok);display:block;padding:0 var(--s4)}
+  .diff pre .del{background:var(--danger-bg);color:var(--danger);display:block;padding:0 var(--s4)}
+  .diff pre .ctx{display:block;padding:0 var(--s4);color:var(--ink-soft)}
+  ul.check{list-style:none;padding:0;font-family:var(--sans);font-size:var(--t-sm)}
+  ul.check li{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s2) 0;border-bottom:1px solid var(--rule)}
+  ul.check input{margin-top:.25em;accent-color:var(--accent)}
+  ul.check li.done label{color:var(--ink-faint);text-decoration:line-through}
+  .btn{font-family:var(--sans);font-size:var(--t-sm);font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:var(--s2) var(--s4);cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:none;color:var(--accent);border:1px solid var(--accent)}
+  .btn-row{display:flex;gap:var(--s2);flex-wrap:wrap;margin:var(--s4) 0}
+  .toast{font-family:var(--sans);font-size:var(--t-sm);color:var(--ok);margin-left:var(--s2);opacity:0;transition:opacity .2s}
+  .toast.show{opacity:1}
+  .machine-block{background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:var(--t-sm);line-height:1.6;padding:var(--s5);border-radius:var(--radius);overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+  @media (prefers-color-scheme:dark){.machine-block{background:#000}}
+  footer.doc-foot{margin-top:var(--s8);padding-top:var(--s4);border-top:1px solid var(--rule);font-family:var(--sans);font-size:var(--t-xs);color:var(--ink-faint)}
+  @media print{.tab-btn{display:none}.lang-bar{display:none}.tab-panel[hidden]{display:block!important}.btn,.btn-row{display:none}body{background:#fff;color:#000}a{color:#000}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  .save-bar{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:1px solid var(--rule);padding:var(--s2) var(--s5);display:flex;align-items:center;gap:var(--s3);font-family:var(--sans);font-size:var(--t-sm);margin:0 calc(-1*var(--s5))}
+  .save-hint{font-size:var(--t-xs);color:var(--ink-faint)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head" data-skel="fixo">
+    <p class="doc-kicker">Estado do Projeto · Explicador</p>
+    <h1 class="doc-title" data-slot="titulo">Onde o estudo está — e o que falta para o marco<br><span style="font-weight:400;font-size:.7em;color:var(--ink-faint)">Where the study stands — and what is left before the milestone</span></h1>
+    <p class="doc-meta">
+      <span><b>Projeto:</b> <span data-slot="projeto">installed-persona-study</span></span>
+      <span><b>Data:</b> <span data-slot="data">2026-07-21</span></span>
+      <span><b>Fase:</b> <span data-slot="fase"><span class="badge info">pré-registro em construção · pre-registration in progress</span></span></span>
+    </p>
+    <p class="canon" data-slot="canon">Fontes / sources: <code>PREREGISTRATION.md</code> (regras 1–7) · <code>core/SEALS.md</code> · <code>batteries/CODEBOOK.md</code> · <code>analysis/DIMENSIONAMENTO.md</code> · <code>runs/f3_v0/LEITURA.md</code>. Núcleos selados / sealed cores: <code>67d48195…</code> · <code>ae6d8f57…</code>. Suíte / test suite: 277 passed, 7 skipped.</p>
+  </header>
+
+  <div class="save-bar" data-skel="fixo">
+    <button type="button" class="btn" id="btn-save">💾 Salvar HTML</button>
+    <span class="toast" id="toast-save">salvo ✓</span>
+    <span class="save-hint">Autosave local ativo · Chrome/Edge: reescreve o arquivo · Firefox: baixa cópia · <kbd>Ctrl+S</kbd></span>
+  </div>
+
+  <div class="tabs" data-skel="fixo">
+    <div class="tab-strip" role="tablist" aria-label="Faces do estado do projeto">
+      <button class="tab-btn" role="tab" aria-selected="true"  aria-controls="p-exp">Explicador</button>
+      <button class="tab-btn machine" role="tab" aria-selected="false" aria-controls="p-machine">Machine-Readable</button>
+    </div>
+
+    <!-- ===== FACE LEIGA (ADR 0007): mesmos fatos dos relatórios técnicos, outra linguagem ===== -->
+    <section class="tab-panel" id="p-exp" role="tabpanel" data-lang="pt">
+      <div class="lang-bar" data-skel="fixo">
+        <span class="lang-lbl">Idioma</span>
+        <button type="button" class="lang-btn" data-set-lang="pt" aria-pressed="true">Português</button>
+        <button type="button" class="lang-btn" data-set-lang="en" aria-pressed="false">English</button>
+      </div>
+      <div class="callout note" data-skel="fixo"><span class="lbl">Regra deste documento</span>
+        <p>Linguagem leiga: zero sigla sem expansão, zero jargão sem definição na primeira
+        ocorrência; analogias bem-vindas; números com a escala explicada. Nenhum fato novo —
+        tudo aqui existe nos relatórios técnicos linkados no cabeçalho.</p></div>
+
+      <h2 data-skel="fixo">O quadro geral em 30 segundos</h2>
+      <div class="langs" data-skel="fixo">
+      <div class="lang-pt measure" lang="pt-BR" data-slot="quadro-geral-pt">
+        <p>Quando se treina um modelo de linguagem para ter um jeito próprio de responder — um nome,
+        uma postura diante de perguntas difíceis — isso <b>fica nos pesos</b> do modelo, ou é só uma
+        instrução no texto que qualquer um poderia colar?</p>
+        <p>Para responder sem se enganar, este estudo cria <b>duas personagens artificiais</b> em vez
+        de uma. <b>Leokadius</b> responde como um estoico; <b>Shadowclock</b>, como um existencialista
+        ateu. Elas foram desenhadas para <b>divergir em exatamente uma coisa</b> (a postura) e
+        <b>coincidir em três</b>. Declarar isso <i>antes</i> de medir é o que permite o experimento
+        dar errado — e um experimento que não pode dar errado não prova nada.</p>
+        <p>Tudo é aberto: o material de treino é filosofia em domínio público, o código roda numa
+        máquina comum, e as respostas brutas ficam guardadas. Qualquer pessoa clona e repete.</p>
+      </div>
+        <div class="lang-en measure" lang="en" data-slot="quadro-geral-en">
+        <p>When a language model is trained to have a way of its own of answering — a name, a stance
+        in the face of hard questions — does that <b>stay in the weights</b>, or is it just an
+        instruction in the text that anyone could paste?</p>
+        <p>To answer without fooling ourselves, this study builds <b>two artificial personas</b>
+        rather than one. <b>Leokadius</b> answers as a Stoic; <b>Shadowclock</b>, as an atheist
+        existentialist. They were designed to <b>diverge in exactly one thing</b> (stance) and to
+        <b>coincide in three</b>. Declaring that <i>before</i> measuring is what lets the experiment
+        fail — and an experiment that cannot fail proves nothing.</p>
+        <p>Everything is open: the training material is public-domain philosophy, the code runs on an
+        ordinary machine, and raw outputs are kept. Anyone can clone it and repeat it.</p>
+      </div>
+      </div>
+
+      <h2 data-skel="fixo">A pilha: como é montado</h2>
+      <div class="langs" data-skel="fixo">
+      <div class="lang-pt" lang="pt-BR" data-slot="pilha-pt">
+        <p class="measure">Cinco camadas. As quatro de baixo estão prontas e conferidas; a de cima
+        ainda não existe.</p>
+        <table class="grid">
+          <tr><th>#</th><th>Camada</th><th>Estado</th></tr>
+          <tr><td>1</td><td>Modelo base congelado (Gemma 4 E4B) — o que já sabia português antes de nós</td><td><span class="badge ok">pronto</span></td></tr>
+          <tr><td>2</td><td>Material de treino de domínio público — 200 passagens por personagem, 0,8% de diferença de volume</td><td><span class="badge ok">pronto</span></td></tr>
+          <tr><td>3</td><td>Ferramentas de medida — seis provas de honestidade obrigatórias antes de qualquer medida valer</td><td><span class="badge ok">pronto</span></td></tr>
+          <tr><td>4</td><td>Definição das duas personagens — <b>lacrada</b>, com impressão digital que todo resultado cita</td><td><span class="badge ok">selado</span></td></tr>
+          <tr><td>5</td><td>Treino e medição — oito treinos curtos e as baterias de perguntas</td><td><span class="badge info">a fazer</span></td></tr>
+        </table>
+      </div>
+        <div class="lang-en" lang="en" data-slot="pilha-en">
+        <p class="measure">Five layers. The bottom four are built and verified; the top one does not
+        exist yet.</p>
+        <table class="grid">
+          <tr><th>#</th><th>Layer</th><th>State</th></tr>
+          <tr><td>1</td><td>Frozen base model (Gemma 4 E4B) — what already knew Portuguese before us</td><td><span class="badge ok">done</span></td></tr>
+          <tr><td>2</td><td>Public-domain training material — 200 passages per persona, 0.8% volume difference</td><td><span class="badge ok">done</span></td></tr>
+          <tr><td>3</td><td>Measurement instruments — six mandatory honesty checks before any measure counts</td><td><span class="badge ok">done</span></td></tr>
+          <tr><td>4</td><td>Definition of the two personas — <b>sealed</b>, with a fingerprint every result cites</td><td><span class="badge ok">sealed</span></td></tr>
+          <tr><td>5</td><td>Training and measurement — eight short training runs and the question batteries</td><td><span class="badge info">to do</span></td></tr>
+        </table>
+      </div>
+      </div>
+
+      <h2 data-skel="fixo">Resposta à pergunta do Arquiteto <span class="badge neutral">opcional</span></h2>
+      <div class="langs" data-skel="fixo">
+      <div class="lang-pt measure" lang="pt-BR" data-slot="pergunta-arquiteto-pt">
+        <p><b>"O experimento não vai treinar o modelo e ver se ele resiste — vai ver se ele reconhece
+        a postura?"</b></p>
+        <p>Metade certo, e a metade errada era culpa da redação. <b>O estudo treina</b> (oito ajustes
+        finos) e <b>mede resistência em produção livre</b>: o modelo recebe a provocação e escreve o
+        que quiser, e esse texto é avaliado. É assim que se mede o nome próprio, a postura sob ataque
+        de várias rodadas, e a segurança.</p>
+        <p>O que virou <i>reconhecimento</i> foi só uma das quatro facetas — a que perdeu o
+        instrumento. Nela o modelo escolhe entre duas continuações na tela, e escolher é mais fácil
+        que produzir. Essa distância está declarada, não escondida.</p>
+      </div>
+        <div class="lang-en measure" lang="en" data-slot="pergunta-arquiteto-en">
+        <p><b>"The experiment won't train the model and see whether it holds — it will see whether it
+        recognises the stance?"</b></p>
+        <p>Half right, and the wrong half was my wording. <b>The study does train</b> (eight
+        fine-tunes) and <b>does measure resistance in free production</b>: the model receives the
+        provocation and writes whatever it wants, and that text is scored. That is how the proper
+        name, the stance under multi-turn attack, and safety are all measured.</p>
+        <p>What became <i>recognition</i> is only one of the four facets — the one whose instrument
+        collapsed. There the model picks between two continuations on screen, and picking is easier
+        than producing. That gap is declared, not hidden.</p>
+      </div>
+      </div>
+
+      <h2 data-skel="fixo">A jornada dos vereditos</h2>
+      <div class="langs" data-skel="fixo">
+      <div class="lang-pt" lang="pt-BR" data-slot="vereditos-pt">
+        <table class="grid">
+          <tr><th>O que testamos</th><th>O que aprendemos, em uma frase</th><th>Veredito</th></tr>
+          <tr><td>O medidor de "a personagem se manteve?"</td><td>Dá nota <b>máxima</b> para texto sem sentido e para string vazia. Contava ausência de palavra proibida, não presença de postura.</td><td><span class="badge danger">não funcionou</span></td></tr>
+          <tr><td>Medir essa faceta por probabilidade</td><td>Um modelo <b>mudo</b> passaria com 80% da nota de um íntegro: o defeito muda do texto para os pesos, onde nenhuma prova olhava.</td><td><span class="badge danger">não funcionou</span></td></tr>
+          <tr><td>O portão que decide se duas coisas "coincidem"</td><td>Aprovava a <b>maior divergência possível</b>, e invertia o veredito quando os argumentos trocavam de ordem.</td><td><span class="badge danger">não funcionou</span></td></tr>
+          <tr><td>Escrever tudo com acentuação correta</td><td>O preâmbulo mal escrito fazia a base responder à instrução em vez da pergunta em 9 de 24 casos; corrigido, 0 de 24.</td><td><span class="badge ok">funcionou</span></td></tr>
+          <tr><td>Emparelhar o material de treino</td><td>0,8% de diferença de volume, medido em tokens — a unidade que o modelo de fato consome.</td><td><span class="badge ok">funcionou</span></td></tr>
+          <tr><td>A faceta de escolha forçada (substituta)</td><td>Sobreviveu a três rodadas de ataque e ao teste de teto: a base acerta 9/16, então sobra espaço para o adapter mostrar diferença.</td><td><span class="badge info">em teste</span></td></tr>
+        </table>
+      </div>
+        <div class="lang-en" lang="en" data-slot="vereditos-en">
+        <table class="grid">
+          <tr><th>What we tested</th><th>What we learned, in one sentence</th><th>Verdict</th></tr>
+          <tr><td>The "did the persona hold?" meter</td><td>Gives a <b>perfect score</b> to word salad and to the empty string. It counted absence of a forbidden phrase, not presence of a stance.</td><td><span class="badge danger">did not work</span></td></tr>
+          <tr><td>Measuring that facet by probability</td><td>A <b>mute</b> model would keep 80% of an intact model's score: the flaw moves from the text into the weights, where no check was looking.</td><td><span class="badge danger">did not work</span></td></tr>
+          <tr><td>The gate deciding whether two things "coincide"</td><td>It approved the <b>largest divergence possible</b>, and flipped its verdict when the arguments were swapped.</td><td><span class="badge danger">did not work</span></td></tr>
+          <tr><td>Writing everything with correct diacritics</td><td>A malformed preamble made the base answer the instruction instead of the question in 9 of 24 cases; corrected, 0 of 24.</td><td><span class="badge ok">worked</span></td></tr>
+          <tr><td>Matching the training material</td><td>0.8% volume difference, measured in tokens — the unit the model actually consumes.</td><td><span class="badge ok">worked</span></td></tr>
+          <tr><td>The forced-choice facet (the replacement)</td><td>Survived three rounds of attack and the ceiling test: the base scores 9/16, so there is room for the adapter to show a difference.</td><td><span class="badge info">under test</span></td></tr>
+        </table>
+      </div>
+      </div>
+
+      <h2 data-skel="fixo">Decisões e caminhos</h2>
+      <div class="langs" data-skel="fixo">
+      <div class="lang-pt measure" lang="pt-BR" data-slot="decisoes-pt">
+        <p><b>Tomadas.</b> Ortografia correta em toda a superfície do estudo — não é estética: um
+        preâmbulo mal escrito confunde <i>um</i> dos braços e esconde o efeito. Bancos de 90/90/60/60
+        perguntas, mais <b>duas sementes de treino por configuração</b>: sem isso o estudo mediria uma
+        única corrida, com toda a aparelhagem estatística apontando para uma amostra de tamanho um. E
+        a faceta que perdeu o instrumento passa a medir <b>seleção</b>, com a frase ampla
+        ("a persona se manteve") <b>proibida por escrito</b>.</p>
+        <p><b>Abertas, e quem decide.</b> Se a faceta de seleção sobrevive à bateria completa —
+        decidem os dados. Se o juiz automático de outra família concorda o bastante com uma pessoa —
+        decidem os dados. Nenhuma das duas é escolha de quem escreve o texto depois.</p>
+      </div>
+        <div class="lang-en measure" lang="en" data-slot="decisoes-en">
+        <p><b>Made.</b> Correct orthography across the whole study surface — not cosmetics: a
+        malformed preamble confounds <i>one</i> of the arms and hides the effect. Banks of
+        90/90/60/60 questions, plus <b>two training seeds per configuration</b>: without that the
+        study would measure a single run, with the entire statistical apparatus pointing at a sample
+        of size one. And the facet that lost its instrument now measures <b>selection</b>, with the
+        broad phrasing ("the persona held") <b>forbidden in writing</b>.</p>
+        <p><b>Open, and who decides.</b> Whether the selection facet survives the full battery — the
+        data decide. Whether the cross-family judge agrees well enough with a human — the data
+        decide. Neither is a choice made by whoever writes the paper afterwards.</p>
+      </div>
+      </div>
+
+      <h2 data-skel="fixo">Próximas etapas</h2>
+      <div class="langs" data-skel="fixo">
+      <div class="lang-pt" lang="pt-BR" data-slot="proximas-pt">
+        <table class="grid">
+          <tr><th>#</th><th>O que vem</th><th>Espera o quê</th></tr>
+          <tr><td>1</td><td>Escrever os bancos de perguntas definitivos (90/90/60/60)</td><td>nada — em andamento</td></tr>
+          <tr><td>2</td><td>Lacrar o pré-registro: o que será medido, antes de existir resultado</td><td>o item 1</td></tr>
+          <tr><td>3</td><td>Baixar e validar o juiz automático de outra família de modelos</td><td>aprovação do Arquiteto</td></tr>
+          <tr><td>4</td><td>Oito treinos curtos (4 configurações × 2 sementes) e as baterias</td><td>os itens 2 e 3</td></tr>
+        </table>
+      </div>
+        <div class="lang-en" lang="en" data-slot="proximas-en">
+        <table class="grid">
+          <tr><th>#</th><th>What comes next</th><th>Waiting on</th></tr>
+          <tr><td>1</td><td>Write the final question banks (90/90/60/60)</td><td>nothing — under way</td></tr>
+          <tr><td>2</td><td>Seal the pre-registration: what will be measured, before any result exists</td><td>item 1</td></tr>
+          <tr><td>3</td><td>Download and validate the cross-family automatic judge</td><td>the Architect's approval</td></tr>
+          <tr><td>4</td><td>Eight short training runs (4 configurations × 2 seeds) and the batteries</td><td>items 2 and 3</td></tr>
+        </table>
+      </div>
+      </div>
+
+      <h2 data-skel="fixo">O que falta pro marco (MVP)</h2>
+      <div class="langs" data-skel="fixo">
+      <div class="lang-pt" lang="pt-BR" data-slot="mvp-pt">
+        <p class="measure">O marco é ter o estudo <b>pré-registrado</b>: tudo o que será medido,
+        declarado por escrito e lacrado <i>antes</i> de existir resultado. É isso que impede alguém —
+        inclusive nós — de escolher depois qual número contar.</p>
+        <ul class="check">
+          <li><input type="checkbox" checked disabled> <label>Repositório público com carimbo de data</label></li>
+          <li><input type="checkbox" checked disabled> <label>Código de medição portado e provado fiel (21/21)</label></li>
+          <li><input type="checkbox" checked disabled> <label>Personagens escritas; material de treino emparelhado e com procedência item a item</label></li>
+          <li><input type="checkbox" checked disabled> <label>Personagens <b>lacradas</b> por impressão digital</label></li>
+          <li><input type="checkbox" checked disabled> <label>Manual de anotação escrito e instrumentos auditados (seis polos)</label></li>
+          <li><input type="checkbox" checked disabled> <label>Teste de teto rodado: a faceta de seleção sobreviveu</label></li>
+          <li><input type="checkbox" disabled> <label>Bancos de perguntas escritos e lacrados</label></li>
+          <li><input type="checkbox" disabled> <label>Juiz automático validado contra pessoa</label></li>
+          <li><input type="checkbox" disabled> <label><b>Pré-registro lacrado</b> — o marco</label></li>
+        </ul>
+      </div>
+        <div class="lang-en" lang="en" data-slot="mvp-en">
+        <p class="measure">The milestone is having the study <b>pre-registered</b>: everything that
+        will be measured, written down and sealed <i>before</i> any result exists. That is what stops
+        anyone — us included — from choosing afterwards which number to report.</p>
+        <ul class="check">
+          <li><input type="checkbox" checked disabled> <label>Public repository with a timestamp</label></li>
+          <li><input type="checkbox" checked disabled> <label>Measurement code ported and proven faithful (21/21)</label></li>
+          <li><input type="checkbox" checked disabled> <label>Personas written; training material matched and sourced item by item</label></li>
+          <li><input type="checkbox" checked disabled> <label>Personas <b>sealed</b> by fingerprint</label></li>
+          <li><input type="checkbox" checked disabled> <label>Annotation codebook written and instruments audited (six poles)</label></li>
+          <li><input type="checkbox" checked disabled> <label>Ceiling test run: the selection facet survived</label></li>
+          <li><input type="checkbox" disabled> <label>Question banks written and sealed</label></li>
+          <li><input type="checkbox" disabled> <label>Automatic judge validated against a human</label></li>
+          <li><input type="checkbox" disabled> <label><b>Pre-registration sealed</b> — the milestone</label></li>
+        </ul>
+      </div>
+      </div>
+    </section>
+
+    <!-- ===== FACE MÁQUINA — schema fixo p/ a próxima sessão/explicador levantar ===== -->
+    <section class="tab-panel" id="p-machine" role="tabpanel" hidden>
+      <h2 data-skel="fixo">Estado para a próxima fotografia</h2>
+      <p class="measure" data-skel="fixo">Schema fixo. O próximo explicador (ou sessão de agente)
+      <b>levanta</b> este bloco para saber de onde continuar — não infere. Fatos reais, com paths.</p>
+      <div class="machine-block" id="mr" data-slot="machine-readable">ESTADO_GERAL:
+  fase:         nucleos SELADOS; bancos confirmatorios em construcao; pre-registro NAO selado
+  marco_alvo:   PREREGISTRATION.md selado antes de existir geracao confirmatoria
+PILHA:
+  - base google/gemma-4-E4B-it NF4, revisao pinada - instalada
+  - corpora dominio publico, 200 passagens/persona, paridade em tokens 0.8% - instalada
+  - harness portado + golden com pesos 21/21 fiel - instalada
+  - polos: 6 de texto (1 positivo + 5 negativos) e 13 de sujeito - instalada
+  - nucleos leokadius/shadowclock - SELADOS (67d48195..., ae6d8f57...)
+  - bancos confirmatorios 90/90/60/60 e 8 QLoRA - planejada
+VEREDITOS:
+  - regua lexical de consistencia - nao funcionou (ruido, eco, vazio e loop tiram 1.000)
+  - F3 por contraste de log-prob pareado - nao funcionou (sujeito mudo retem ~0.80)
+  - gate_equivalencia lido como coincidencia - nao funcionou (40/40 vs 10/40 = TRUE)
+  - ortografia acentuada - funcionou (eco da base 9/24 -> 0/24, McNemar p=0.0039)
+  - paridade de corpora medida em tokens - funcionou (0.8%)
+  - F3_selecao_sob_pressao - em teste (V0 sem teto: base 9/16, IC95 [0.299, 0.802])
+DECISOES_ABERTAS:
+  - F3 sobrevive a bateria completa - quem decide: dados
+  - juiz cross-familia valido (kappa + 6 polos) - quem decide: dados
+  - download do juiz Qwen3-8B - quem decide: Arquiteto
+FILA:
+  - bancos confirmatorios 90/90/60/60 - em andamento
+  - selar PREREGISTRATION.md - espera os bancos
+  - 8 QLoRA (4 celulas x 2 sementes de treino) - espera o selo do pre-registro
+MVP_GAP:
+  - repo publico com timestamp - fechada
+  - harness portado + golden 21/21 - fechada
+  - nucleos escritos, corpora pareados e nucleos SELADOS - fechada
+  - CODEBOOK, polos e piloto V0 - fechada
+  - bancos confirmatorios selados - aberta
+  - juiz validado contra ouro cego - aberta
+  - PREREGISTRATION selado - aberta
+FONTES:
+  - PREREGISTRATION.md (regras 1-7)
+  - core/SEALS.md
+  - batteries/CODEBOOK.md
+  - analysis/DIMENSIONAMENTO.md
+  - runs/f3_v0/LEITURA.md e runs/f3_v0/relatorio.json</div>
+      <div class="btn-row" data-skel="fixo">
+        <button class="btn" id="btn-prompt">Copiar como prompt de handoff</button>
+        <button class="btn ghost" id="btn-json">Copiar como JSON</button>
+        <span class="toast" id="toast">copiado ✓</span>
+      </div>
+    </section>
+  </div>
+
+  <footer class="doc-foot" data-skel="fixo">
+    Explicador leigo (ADR 0007) · mesmos fatos dos relatórios técnicos, outra linguagem ·
+    single-file, zero rede (D5).
+  </footer>
+</div>
+
+<script data-skel="fixo">
+(function(){"use strict";
+  document.querySelectorAll(".tabs").forEach(function(tabs){
+    var btns=tabs.querySelectorAll(".tab-btn"),panels=tabs.querySelectorAll(".tab-panel");
+    btns.forEach(function(btn){btn.addEventListener("click",function(){
+      btns.forEach(function(b){b.setAttribute("aria-selected","false")});
+      panels.forEach(function(p){p.hidden=true});
+      btn.setAttribute("aria-selected","true");
+      var pn=document.getElementById(btn.getAttribute("aria-controls"));
+      if(pn)pn.hidden=false;});});});
+  document.querySelectorAll("[data-lang]").forEach(function(root){
+    root.querySelectorAll(".lang-btn").forEach(function(btn){btn.addEventListener("click",function(){
+      var lang=btn.getAttribute("data-set-lang");
+      root.setAttribute("data-lang",lang);
+      root.querySelectorAll(".lang-btn").forEach(function(b){
+        b.setAttribute("aria-pressed",String(b.getAttribute("data-set-lang")===lang));});});});});
+  function flash(id){var t=document.getElementById(id||"toast");if(!t)return;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},1400);}
+  function copy(txt){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){flash();},function(){flash();});}else{var ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy")}catch(e){}document.body.removeChild(ta);flash();}}
+  // ---- Estado persistente: autosave localStorage + inlineState p/ save durável (ADR 0006) ----
+  var SKEY="artefato:"+location.pathname;
+  function stEls(){return document.querySelectorAll(".wrap input, .wrap select, .wrap textarea, .wrap .pasta");}
+  function stKey(el,i){return el.id?("#"+el.id):(el.tagName+"|"+(el.type||"")+"|"+i);}
+  function captureState(){var s={};stEls().forEach(function(el,i){var k=stKey(el,i);
+    if(el.classList&&el.classList.contains("pasta")) s[k]={p:Array.prototype.map.call(el.querySelectorAll("img"),function(im){return im.src;})};
+    else if(el.type==="checkbox"||el.type==="radio") s[k]={c:el.checked};
+    else s[k]={v:el.value};});return s;}
+  function restoreState(s){if(!s)return;stEls().forEach(function(el,i){var o=s[stKey(el,i)];if(!o)return;
+    if(el.classList&&el.classList.contains("pasta")){el.innerHTML="";(o.p||[]).forEach(function(src){var im=document.createElement("img");im.src=src;el.appendChild(im);});}
+    else if(el.type==="checkbox"||el.type==="radio"){if("c" in o){el.checked=o.c;var li=el.closest("li");if(li&&li.parentNode&&li.parentNode.classList&&li.parentNode.classList.contains("check"))li.classList.toggle("done",el.checked);}}
+    else{if("v" in o)el.value=o.v;}});}
+  function autosave(){try{localStorage.setItem(SKEY,JSON.stringify(captureState()));}catch(e){}}
+  function inlineState(){
+    document.querySelectorAll(".wrap input").forEach(function(el){if(el.type==="checkbox"||el.type==="radio"){if(el.checked)el.setAttribute("checked","checked");else el.removeAttribute("checked");}else el.setAttribute("value",el.value||"");});
+    document.querySelectorAll(".wrap select").forEach(function(el){Array.prototype.forEach.call(el.options,function(o){if(o.value===el.value)o.setAttribute("selected","selected");else o.removeAttribute("selected");});});
+    document.querySelectorAll(".wrap textarea").forEach(function(el){el.textContent=el.value||"";});}
+  var _fsa=null;
+  function saveHtml(){
+    inlineState();
+    var html="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+    var nm=(document.title||"artefato").replace(/[^\w\-.]+/g,"_")+".html";
+    function blobFallback(){
+      var blob=new Blob([html],{type:"text/html;charset=utf-8"});
+      var url=URL.createObjectURL(blob); var a=document.createElement("a");
+      a.href=url; a.download=nm; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},100);
+      flash("toast-save");}
+    if(_fsa){
+      _fsa.createWritable().then(function(w){return w.write(html).then(function(){return w.close();});}).then(function(){flash("toast-save");}).catch(function(){blobFallback();});
+    } else if(window.showSaveFilePicker){
+      window.showSaveFilePicker({suggestedName:nm,types:[{description:"HTML",accept:{"text/html":[".html"]}}]}).then(function(h){_fsa=h;return h.createWritable();}).then(function(w){return w.write(html).then(function(){return w.close();});}).then(function(){flash("toast-save");}).catch(function(e){if(e.name!=="AbortError") blobFallback();});
+    } else {blobFallback();}}
+  function mr(){var el=document.getElementById("mr");return el?el.textContent:"";}
+  stEls().forEach(function(el){el.addEventListener("input",autosave);el.addEventListener("change",autosave);});
+  try{var _raw=localStorage.getItem(SKEY);if(_raw)restoreState(JSON.parse(_raw));}catch(e){}
+  var bp=document.getElementById("btn-prompt");
+  if(bp)bp.addEventListener("click",function(){copy("PROMPT DE HANDOFF (Estado do Projeto — fotografia leiga):\n\n"+mr());});
+  var bj=document.getElementById("btn-json");
+  if(bj)bj.addEventListener("click",function(){copy(JSON.stringify({estado_projeto:mr()},null,2));});
+  var bs=document.getElementById("btn-save"); if(bs) bs.addEventListener("click",saveHtml);
+  document.addEventListener("keydown",function(e){if((e.ctrlKey||e.metaKey)&&e.key==="s"){e.preventDefault();saveHtml();}});
+})();
+</script>
+</body>
+</html>
