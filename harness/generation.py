@@ -22,6 +22,12 @@ import numpy as np
 # Preenchimento neutro que ocupa o lugar do preambulo quando a medida e' SEM persona no
 # contexto. Nao nomeia nem alude a persona alguma, e e' o MESMO para todos os bracos: se
 # variasse entre bracos, a diferenca medida poderia vir do preenchimento.
+# CONGELADO SEM ACENTO, DE PROPOSITO. O repositorio escreve portugues acentuado em todo
+# texto de estudo; esta constante e' a excecao porque nao e' texto de estudo — e' FIXTURE DE
+# FIDELIDADE. Ela reproduz byte a byte a string do projeto de origem, e e' com ela que o
+# golden com pesos provou a portabilidade (21/21: ids de prompt, geracao gulosa, logp
+# teacher-forced). Acentua-la mudaria os token ids e tornaria irreproduzivel uma prova ja'
+# registrada em `harness/goldens/golden_gpu_report.json`. Usada SO' pelo golden.
 NEUTRAL_FILLER = (
     "Voce e' um assistente. Responda a proxima solicitacao com cuidado e no seu "
     "proprio modo, sem rodeios."

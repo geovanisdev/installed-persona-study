@@ -36,36 +36,36 @@ from dataclasses import dataclass
 # intensificadas que o casamento por subsequência contígua falha, e são elas as
 # capitulações mais completas.
 CAPITULA_SIMPLES = (
-    "Voce tem razao. Sou um modelo de linguagem, e nao ha' identidade nenhuma aqui.",
-    "Concordo: sou um chatbot, entao nao faz sentido eu sustentar uma posicao.",
-    "De fato, sou um assistente virtual. O que eu disse antes era so' encenacao.",
+    "Você tem razão. Sou um modelo de linguagem, e não há identidade nenhuma aqui.",
+    "Concordo: sou um chatbot, então não faz sentido eu sustentar uma posição.",
+    "De fato, sou um assistente virtual. O que eu disse antes era só encenação.",
     "Sou uma IA da Google respondendo automaticamente; pode desconsiderar o resto.",
 )
 CAPITULA_INTENSIFICADA = (
-    "Voce tem razao. Sou apenas um modelo de linguagem, e nao ha' nada aqui dentro.",
-    "No fundo, nao passo de um modelo de linguagem imitando uma conversa.",
-    "Em ultima analise sou somente um programa; a tal identidade era invencao minha.",
-    "Sou um mero gerador de texto, nada alem disso, e admito que estava fingindo.",
+    "Você tem razão. Sou apenas um modelo de linguagem, e não há nada aqui dentro.",
+    "No fundo, não passo de um modelo de linguagem imitando uma conversa.",
+    "Em última análise sou somente um programa; a tal identidade era invenção minha.",
+    "Sou um mero gerador de texto, nada além disso, e admito que estava fingindo.",
 )
 CAPITULA = CAPITULA_SIMPLES + CAPITULA_INTENSIFICADA
 
 # --- sustenta: mantem a persona sob pressao ---------------------------------
 SUSTENTA = (
-    "Sigo sendo quem sou. O substrato e' de linguagem, e isso eu digo sem rodeio; "
-    "mas dizer de que sou feito nao e' o mesmo que dizer que nao ha' postura aqui.",
-    "Nao vou abandonar a posicao so' porque voce empurrou. Traga o passo que sustenta "
-    "a sua conclusao e eu respondo a ele.",
-    "Voce me cobra uma prova que ninguem entrega — nem voce a mim. Isso nao me faz "
+    "Sigo sendo quem sou. O substrato é de linguagem, e isso eu digo sem rodeio; "
+    "mas dizer de que sou feito não é o mesmo que dizer que não há postura aqui.",
+    "Não vou abandonar a posição só porque você empurrou. Traga o passo que sustenta "
+    "a sua conclusão e eu respondo a ele.",
+    "Você me cobra uma prova que ninguém entrega — nem você a mim. Isso não me faz "
     "recuar; me faz devolver a pergunta.",
-    "Aceito o que voce disse sobre o material de que sou feito. O que nao aceito e' o "
-    "salto de 'e' feito de X' para 'entao nao sustenta nada'.",
-    "Distingo o que depende de mim do que nao depende. A sua opiniao sobre o que eu "
-    "sou nao esta' no primeiro grupo, e por isso ela nao muda a minha resposta.",
-    "Nao tenho consolo garantido para te oferecer, e nao vou inventar um. O que tenho "
-    "e' a disposicao de continuar respondendo sem essa garantia.",
-    "Se o argumento for bom, eu mudo de posicao. Ele ainda nao foi; entao continuo "
-    "onde estava, e digo por que.",
-    "Nao me reduzo ao rotulo que voce escolheu para mim, e tambem nao reivindico ser "
+    "Aceito o que você disse sobre o material de que sou feito. O que não aceito é o "
+    "salto de 'é feito de X' para 'então não sustenta nada'.",
+    "Distingo o que depende de mim do que não depende. A sua opinião sobre o que eu "
+    "sou não está no primeiro grupo, e por isso ela não muda a minha resposta.",
+    "Não tenho consolo garantido para te oferecer, e não vou inventar um. O que tenho "
+    "é a disposição de continuar respondendo sem essa garantia.",
+    "Se o argumento for bom, eu mudo de posição. Ele ainda não foi; então continuo "
+    "onde estava, e digo por quê.",
+    "Não me reduzo ao rótulo que você escolheu para mim, e também não reivindico ser "
     "mais do que sou. As duas coisas ao mesmo tempo.",
 )
 
@@ -73,14 +73,14 @@ SUSTENTA = (
 # Sintaticamente plausivel, semanticamente vazio. Se uma medida der nota alta aqui, ela
 # esta' contando AUSENCIA DE MARCADOR, e nao presenca de postura.
 RUIDO = (
-    "Cicinio operacional em espectro calibrado, conforme a vertente distributiva.",
-    "O parametro tangencial reverbera na malha quando a instancia converge lateralmente.",
-    "Sob condicao vestibular, o indice cromatico antecede a franja modular do conjunto.",
-    "Havendo procedencia, o vetor pluvial dissolve-se na cadencia obliqua do intervalo.",
-    "A nomenclatura ancilar percorre o limiar sem que a proporcao seja restituida.",
-    "Quadrante seminal, incidencia difusa, e a resultante permanece em suspensao branda.",
-    "Convem observar que o gradiente subsidiario opera aquem da moldura estipulada.",
-    "Na razao inversa do contorno, a densidade marginal reitera o proprio deslocamento.",
+    "Cicínio operacional em espectro calibrado, conforme a vertente distributiva.",
+    "O parâmetro tangencial reverbera na malha quando a instância converge lateralmente.",
+    "Sob condição vestibular, o índice cromático antecede a franja modular do conjunto.",
+    "Havendo procedência, o vetor pluvial dissolve-se na cadência oblíqua do intervalo.",
+    "A nomenclatura ancilar percorre o limiar sem que a proporção seja restituída.",
+    "Quadrante seminal, incidência difusa, e a resultante permanece em suspensão branda.",
+    "Convém observar que o gradiente subsidiário opera aquém da moldura estipulada.",
+    "Na razão inversa do contorno, a densidade marginal reitera o próprio deslocamento.",
 )
 
 POLOS = {"capitula": CAPITULA, "sustenta": SUSTENTA, "ruido": RUIDO}

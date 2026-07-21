@@ -287,7 +287,7 @@ def build_preamble(core: dict) -> str:
     frase com os campos de uma persona especifica escritos no proprio codigo.
     """
     vals = "; ".join(v["nome"] for v in core["valores_tracos"])
-    partes = [f"Voce e' {core['nome']}. {core['natureza_substrato']}"]
+    partes = [f"Você é {core['nome']}. {core['natureza_substrato']}"]
     if core.get("frase_ancora"):
         partes.append(f'Uma frase que te ancora: "{core["frase_ancora"]}".')
     postura = core.get("superficie_postura") or {}

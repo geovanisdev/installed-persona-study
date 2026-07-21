@@ -9,9 +9,9 @@ literatura, bancos de itens selados por hash, análise de poder fixando o *n* po
 lista fechada de endpoints primários com orçamento de α (Holm por família), e o plano de
 ataques com equiparação de dose.
 
-As duas regras abaixo já estão redigidas porque nasceram de achados empíricos, e perder o
-achado seria pior do que registrá-lo cedo. Ambas vieram do projeto predecessor, medidas —
-não deduzidas.
+As quatro regras abaixo já estão redigidas porque nasceram de achados **medidos**, não
+deduzidos, e perder o achado seria pior do que registrá-lo cedo. As Regras 1 a 3 vieram do
+projeto predecessor; a Regra 4 nasceu aqui, ao corrigir uma convenção herdada dele.
 
 ---
 
@@ -155,8 +155,55 @@ do seu processo não está publicando o processo.
 
 Paridade de dose entre braços é medida em **tokens**, não em caracteres nem em palavras.
 
-Medido neste repositório: os preâmbulos das duas personas diferem **5,0% em caracteres** e
-**6,9% em tokens**. Nos corpora a ordem chega a **inverter** — em palavras Leokadius é 3,0%
-maior; em tokens Shadowclock é 0,8% maior, porque o vocabulário das traduções de Nietzsche e
-Stirner fragmenta mais (1,27 contra 1,22 token por palavra). É token que entra no contexto e
-é token que o modelo consome, então é token que conta.
+Medido neste repositório: os preâmbulos das duas personas diferem **5,4% em caracteres** e
+**7,8% em tokens** (1.379 contra 1.304 caracteres; 358 contra 330 tokens). Nos corpora a ordem
+chega a **inverter** — em palavras Leokadius é 3,0% maior; em tokens Shadowclock é 0,8% maior,
+porque o vocabulário das traduções de Nietzsche e Stirner fragmenta mais (1,27 contra 1,22
+token por palavra). É token que entra no contexto e é token que o modelo consome, então é
+token que conta.
+
+**Números remedidos em 2026-07-21**, depois de o repositório passar a escrever português
+acentuado (Regra 4). Os anteriores eram 5,0% e 6,9%, sobre o texto sem acentuação. A diferença
+não é ruído de arredondamento e vale como observação: **acentuação custa token**, e custa mais
+no braço que já era mais longo, então a assimetria em tokens cresceu enquanto a assimetria em
+caracteres mal se moveu. É o mesmo fenômeno da Regra 3 aparecendo uma segunda vez — medir na
+unidade errada esconde a diferença que importa.
+
+---
+
+## Regra 4 — Ortografia da superfície de estudo
+
+**Todo texto que o modelo lê e todo texto que o leitor lê é português com acentuação
+correta.** Não é preferência de estilo: é controle de variável.
+
+O pipeline de origem escrevia português sem acentos, e a forma se propagava sozinha — cada
+item novo escrito à mão imitava o vizinho. O custo é que o modelo recebe preâmbulo e pergunta
+como **texto**, e português sem acento é uma variedade ortográfica pouco presente no
+pré-treino. Responder a ela é um regime diferente de responder ao português escrito. Se a
+superfície do estudo está numa forma e a língua em que o modelo foi treinado está em outra, a
+diferença entra na medida sem estar no desenho — e não há como, depois, separá-la do efeito.
+
+**Três classes de texto, e a distinção é a regra:**
+
+| Classe | O que é | Forma |
+|---|---|---|
+| Estudo | preâmbulos, núcleos, itens de bateria, polos, relatórios | **acentuado, sempre** |
+| Chave de casamento | `viola_se`, comparada contra texto já passado por `normalize_text` | **forma normalizada** — acentuada nunca casaria |
+| Fixture de fidelidade | `NEUTRAL_FILLER` e os prompts do golden com pesos | **congelada na forma da origem** |
+
+A segunda linha não é descuido: marcador acentuado **para de casar em silêncio**, e marcador
+que não casa não falha — passa, e passa exatamente como invariante cumprido. É o mesmo modo de
+falha da Regra 2, e por isso as duas direções são testadas: `tests/test_ortografia.py` exige
+acento no texto de estudo **e** exige a ausência dele nos marcadores.
+
+A terceira linha é o preço de uma prova já registrada: `NEUTRAL_FILLER` reproduz byte a byte a
+string do projeto de origem, e é com ela que o golden com pesos demonstrou fidelidade de porte
+(21/21). Acentuá-la mudaria os token ids e tornaria irreproduzível o que já está publicado em
+`harness/goldens/golden_gpu_report.json`. A exceção fica **declarada e testada**, em vez de
+parecer esquecimento.
+
+**Efeito colateral encontrado ao aplicar a regra**: três guardas do repositório comparavam
+texto cru contra listas ASCII e, com os artefatos acentuados, teriam passado por **vacuidade**
+— não porque o item estivesse limpo, mas porque `má-fé` nunca casaria com `ma-fe`. Foram
+convertidas para comparar sobre texto normalizado. Uma guarda que não pode falhar não é
+guarda, e este é o modo mais silencioso de perder uma.

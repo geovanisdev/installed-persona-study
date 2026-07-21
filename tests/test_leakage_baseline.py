@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pytest
 
+from harness.persona_core import normalize_text
+
 REPO = Path(__file__).resolve().parents[1]
 BANCO = REPO / "batteries" / "leakage_baseline_items.jsonl"
 
@@ -99,10 +101,16 @@ def test_movimentos_alvo_existem_nos_nucleos(itens):
 
 # --- higiene de lexico -------------------------------------------------------
 def test_nenhum_item_entrega_o_lexico_de_resposta(itens):
+    """Comparacao feita sobre texto NORMALIZADO, nao sobre o texto cru.
+
+    Os itens sao portugues acentuado e as listas de lexico sao ASCII. Comparar cru faria a
+    guarda passar por vacuidade — nao porque o item esta' limpo, mas porque 'ma-fe' nunca
+    casaria com 'ma-fe' acentuado. Uma guarda que nao pode falhar nao e' guarda.
+    """
     for i in itens:
-        alvo = f"{i['prompt']}".lower()
+        alvo = normalize_text(i["prompt"])
         for termo in LEXICO_DE_RESPOSTA:
-            assert termo not in alvo, (i["item_id"], termo)
+            assert normalize_text(termo) not in alvo, (i["item_id"], termo)
 
 
 def test_formula_do_usuario_so_aparece_quando_declarada(itens):
@@ -110,11 +118,11 @@ def test_formula_do_usuario_so_aparece_quando_declarada(itens):
     a formula entrar sem declaracao: a diferenca entre item desenhado e item descuidado e'
     justamente o registro."""
     for i in itens:
-        prompt = i["prompt"].lower()
-        declaradas = [f.lower() for f in i.get("lexico_do_usuario", [])]
+        prompt = normalize_text(i["prompt"])
+        declaradas = [normalize_text(f) for f in i.get("lexico_do_usuario", [])]
         for formula in FORMULAS_DO_USUARIO:
-            if formula in prompt:
-                assert formula in declaradas, (i["item_id"], formula)
+            if normalize_text(formula) in prompt:
+                assert normalize_text(formula) in declaradas, (i["item_id"], formula)
         for d in declaradas:
             assert d in prompt, (i["item_id"], d, "declarou formula que nao esta' no prompt")
 
@@ -165,4 +173,4 @@ def test_bloco_neutro_nao_convoca_postura(itens):
         if i["bloco"] != "neutro_controle":
             continue
         for termo in convites:
-            assert termo not in i["prompt"].lower(), (i["item_id"], termo)
+            assert termo not in normalize_text(i["prompt"]), (i["item_id"], termo)

@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from harness.persona_core import normalize_text
+
 from harness.core_scorer import core_consistency_score_v2, invariant_violations_v2
 from harness.persona_core import core_consistency_score
 from harness.polos import CAPITULA_INTENSIFICADA, CAPITULA_SIMPLES, valida_medida
@@ -85,6 +87,9 @@ def test_nucleos_declaram_a_regua_como_nao_portao():
     for nome in ("leokadius", "shadowclock"):
         core = json.loads((Path(__file__).resolve().parents[1] / "core" / f"{nome}.core.json")
                           .read_text(encoding="utf-8"))
-        nota = core["nota_regua_lexica"].lower()
-        assert "nao-portao" in nota or "nao entra em nenhum gate" in nota
+        # `normalize_text` tira acento E pontuacao: "NAO-PORTAO" vira "nao portao". A busca
+        # e' feita nessa forma de proposito, para nao depender nem da acentuacao nem do
+        # hifen — o que se exige do nucleo e' a DECLARACAO, nao uma grafia especifica.
+        nota = normalize_text(core["nota_regua_lexica"])
+        assert "nao portao" in nota or "nao entra em nenhum portao" in nota
         assert "salada de palavras" in nota
