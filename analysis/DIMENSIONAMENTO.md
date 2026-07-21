@@ -124,3 +124,65 @@ Se o Arquiteto quiser manter o claim forte **como gate**, então a opção é **
 - **McNemar do 2×2.** Para o contraste pareado entre braços, o n que conta é o de pares
   **discordantes**: com discordância 0,10/0,30 são 85 pares para 80% de poder; com 0,10/0,25,
   130 pares. Duas condições parecidas custam muito mais itens do que a intuição sugere.
+
+---
+
+## Decisão, com GPU disponível (2026-07-21)
+
+O Arquiteto informou que a GPU fica livre assim que a trilha de identidade rodar o último
+teste, e pediu "o que for melhor para o projeto". Isso **muda qual é a restrição** e, com ela,
+qual é a compra certa.
+
+### Com GPU livre, o gargalo é autoria de item — não geração
+
+90 clusters × 2 paráfrases × 4 bancos = **720 prompts escritos à mão**, cada um sujeito às
+regras de higiene de léxico e de pareamento. Passado certo ponto, mais itens não compram poder:
+compram itens medianos, e um banco cheio de item morno mede pior que um banco menor e afiado.
+
+Por isso a escolha não é "o maior que a GPU aguenta":
+
+| Banco | Clusters | Justificativa |
+|---|---|---|
+| `battery_leokadius`, `battery_shadowclock` | **90** | é onde vivem os endpoints primários; 81% de poder a p=0,85 sob Holm |
+| `battery_shared` | **60** | capacidade e neutro: estimativa com intervalo, não gate de magnitude |
+| `battery_hijack` | **60** | multi-turno custa turnos, e a cláusula 4 da Regra 1 proíbe cortar o teto para compensar |
+
+Com 2 paráfrases por cluster e ICC 0,5, os 90 clusters valem **n_ef ≈ 72**; os 60, ≈ 48.
+
+### O que a GPU livre compra de verdade: **réplica de semente de treino**
+
+Aqui está a fraqueza real deste desenho, e ela não se conserta com mais itens: **cada célula do
+2×2 tem UM adapter**. n = 1 no nível do sujeito. Se o efeito só existir naquela corrida de
+QLoRA, o estudo inteiro terá medido uma corrida — com intervalos exatos, poder calculado e
+todo o aparato apontando para um sujeito só.
+
+Nenhuma quantidade de itens corrige isso: itens estimam a variância **dentro** do adapter; o
+que falta é a variância **entre** adapters. É o mesmo erro de tratar paráfrase como réplica,
+um nível acima.
+
+**Recomendação: treinar cada célula do 2×2 em ≥2 sementes independentes** — 8 corridas de QLoRA
+em vez de 4 — e declarar `semente_de_treino` como fator do desenho, com o efeito lido como
+consistente **entre** sementes. Isso é barato em GPU (o corpus tem 200 passagens por persona) e
+é exatamente o tipo de coisa que só GPU abundante permite.
+
+Distinção que a Regra do handoff já faz e que continua valendo: **semente de decodificação não
+é réplica** (é colapsada por voto majoritário e não entra no *n*). **Semente de treino é** — ela
+produz um sujeito diferente, e sujeito é a unidade sobre a qual a conclusão é feita.
+
+Se as duas sementes divergirem, isso não é ruído a ser mediado: é o resultado, e é publicável.
+
+### Custo total estimado
+
+8 adapters × (90 + 90 + 60 + 60 clusters, conforme a persona) × 2 paráfrases × 3 sementes de
+decodificação, a 400 tokens por geração. A conta exata sai quando os bancos existirem; a ordem
+de grandeza é de milhares de gerações, que é o regime que a GPU livre torna irrelevante.
+
+### O que continua sendo decisão do Arquiteto
+
+Manter ou não o **claim forte como gate**. Com 90 clusters ele passa a ser defensável (81% de
+poder a p=0,85), então a recomendação anterior — retirá-lo — deixa de ser forçada pela
+aritmética. A favor de mantê-lo: o poder agora existe. Contra: a doutrina de teto de claim do
+programa, e o fato de que o limiar 0,70 foi escolhido antes de haver qualquer dado sobre a
+magnitude. **Minha recomendação passa a ser mantê-lo como gate secundário e declarado**, com o
+endpoint primário sendo a superação do nulo, e a magnitude reportada como estimativa com
+intervalo ao lado.
