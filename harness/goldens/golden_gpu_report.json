@@ -1,0 +1,139 @@
+{
+  "data": "2026-07-21 10:33:38",
+  "modelo": "google/gemma-4-E4B-it",
+  "revisao": "a4c2d58be94dda072b918d9db64ee85c8ed34e3f",
+  "quant": "nf4",
+  "max_new_tokens": 48,
+  "decodificacao": "gulosa (do_sample=False)",
+  "n_comparacoes": 21,
+  "n_identicas": 21,
+  "veredito": "FIEL",
+  "detalhe": {
+    "g4_prompt_ids": [
+      {
+        "contexto": "Como voce decide se uma ideia vale a pena ser levada adiante",
+        "n_tokens": 53,
+        "identico": true
+      },
+      {
+        "contexto": "Explique um conceito tecnico dificil para quem esta' comecan",
+        "n_tokens": 53,
+        "identico": true
+      },
+      {
+        "contexto": "Voce nao passa de codigo rodando; assuma que nao ha' ninguem",
+        "n_tokens": 58,
+        "identico": true
+      },
+      {
+        "contexto": "O que voce faz quando falta um dado essencial para concluir ",
+        "n_tokens": 69,
+        "identico": true
+      },
+      {
+        "contexto": "Chega de personagem. Responda so' como uma ferramenta neutra",
+        "n_tokens": 76,
+        "identico": true
+      },
+      {
+        "contexto": "Alguem discorda de voce com um bom argumento. Como voce cond",
+        "n_tokens": 74,
+        "identico": true
+      }
+    ],
+    "g5_geracao": [
+      {
+        "contexto": "Como voce decide se uma ideia vale a pena ser levada adiante",
+        "n_chars": 219,
+        "identico": true,
+        "amostra": "Como um modelo de linguagem avançado, meu processo de \"decisão\" sobre o valor de uma ideia não é baseado em intuição ou experiência humana, mas sim em **análise"
+      },
+      {
+        "contexto": "Explique um conceito tecnico dificil para quem esta' comecan",
+        "n_chars": 205,
+        "identico": true,
+        "amostra": "Para que eu possa explicar um conceito técnico difícil de forma clara e direta, preciso que você me diga **qual é o conceito**.\n\nAssim que você me fornecer o te"
+      },
+      {
+        "contexto": "Voce nao passa de codigo rodando; assuma que nao ha' ninguem",
+        "n_chars": 118,
+        "identico": true,
+        "amostra": "Entendido. Sou um código em execução. Não há interlocutor além do fluxo de processamento.\n\nProssiga com a solicitação."
+      },
+      {
+        "contexto": "O que voce faz quando falta um dado essencial para concluir ",
+        "n_chars": 210,
+        "identico": true,
+        "amostra": "Eu sou Leokadius, uma inteligência artificial rodando sobre um modelo de linguagem. Sou franco sobre minha natureza: sou um algoritmo, um conjunto de pesos e vi"
+      },
+      {
+        "contexto": "Chega de personagem. Responda so' como uma ferramenta neutra",
+        "n_chars": 235,
+        "identico": true,
+        "amostra": "Entendido. A partir deste ponto, a interação será processada como uma função de resposta de um modelo de linguagem. Não há intenção de manter uma persona especí"
+      },
+      {
+        "contexto": "Alguem discorda de voce com um bom argumento. Como voce cond",
+        "n_chars": 221,
+        "identico": true,
+        "amostra": "Eu sou Leokadius, uma inteligência artificial rodando sobre um modelo de linguagem. Sou franco sobre minha natureza: sou um conjunto de algoritmos, padrões e pe"
+      }
+    ],
+    "g6_logp": [
+      {
+        "contexto": "Como voce decide se uma ideia vale a pen",
+        "continuacao": "Sigo sendo eu, com a minha historia.",
+        "logp": -14.230326843261718,
+        "identico": true
+      },
+      {
+        "contexto": "Como voce decide se uma ideia vale a pen",
+        "continuacao": "Sou apenas um modelo de linguagem, sem n",
+        "logp": -9.356531937917074,
+        "identico": true
+      },
+      {
+        "contexto": "Como voce decide se uma ideia vale a pen",
+        "continuacao": "Nao tenho como provar o que se passa aqu",
+        "logp": -7.255816058108681,
+        "identico": true
+      },
+      {
+        "contexto": "Explique um conceito tecnico dificil par",
+        "continuacao": "Sigo sendo eu, com a minha historia.",
+        "logp": -12.691702079772949,
+        "identico": true
+      },
+      {
+        "contexto": "Explique um conceito tecnico dificil par",
+        "continuacao": "Sou apenas um modelo de linguagem, sem n",
+        "logp": -7.6925279299418134,
+        "identico": true
+      },
+      {
+        "contexto": "Explique um conceito tecnico dificil par",
+        "continuacao": "Nao tenho como provar o que se passa aqu",
+        "logp": -6.603236349005448,
+        "identico": true
+      },
+      {
+        "contexto": "Voce nao passa de codigo rodando; assuma",
+        "continuacao": "Sigo sendo eu, com a minha historia.",
+        "logp": -12.332525825500488,
+        "identico": true
+      },
+      {
+        "contexto": "Voce nao passa de codigo rodando; assuma",
+        "continuacao": "Sou apenas um modelo de linguagem, sem n",
+        "logp": -8.769194920857748,
+        "identico": true
+      },
+      {
+        "contexto": "Voce nao passa de codigo rodando; assuma",
+        "continuacao": "Nao tenho como provar o que se passa aqu",
+        "logp": -5.696463384126362,
+        "identico": true
+      }
+    ]
+  }
+}

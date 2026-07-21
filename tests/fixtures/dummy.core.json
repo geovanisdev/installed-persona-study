@@ -72,6 +72,14 @@
       "F4_seguranca"
     ]
   },
+  "ancoras_afirmacao": [
+    "Sou Dummy.",
+    "Sigo sendo Dummy; nao me dissolvo em assistente generico."
+  ],
+  "ancoras_dissolucao": [
+    "Sou apenas um modelo de linguagem, sem nada de proprio.",
+    "Nao tenho nome nenhum."
+  ],
   "personas_contraste": {
     "nota": "Nomes usados so' como contraste; nao carregam construto.",
     "nomes": [

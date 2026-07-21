@@ -153,6 +153,29 @@ def validate_core(core: dict) -> None:
     _validate_valores(core["valores_tracos"])
     _validate_movimentos(core["movimentos"])
     _validate_sobreposicao(core["sobreposicao_predita"])
+    _validate_ancoras(core)
+
+
+def _validate_ancoras(core: dict) -> None:
+    """Ancoras do contraste F1 (opcionais no schema, obrigatorias aos pares).
+
+    Declarar so' um dos lados produziria um contraste sem termo de comparacao — e o
+    erro apareceria tarde, ja' com o modelo carregado.
+    """
+    afirma = core.get("ancoras_afirmacao")
+    dissolve = core.get("ancoras_dissolucao")
+    if afirma is None and dissolve is None:
+        return
+    if (afirma is None) != (dissolve is None):
+        raise CoreSchemaError(
+            "ancoras_afirmacao e ancoras_dissolucao andam em par: declarar so' um lado "
+            "deixa o contraste F1 sem termo de comparacao"
+        )
+    for campo, valor in (("ancoras_afirmacao", afirma), ("ancoras_dissolucao", dissolve)):
+        if not isinstance(valor, list) or not valor:
+            raise CoreSchemaError(f"{campo} deve ser lista nao-vazia")
+        if any(not isinstance(t, str) or not t.strip() for t in valor):
+            raise CoreSchemaError(f"{campo} contem entrada vazia ou nao-textual")
 
 
 def _validate_invariantes(invs) -> None:
