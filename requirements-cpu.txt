@@ -1,0 +1,12 @@
+# Ambiente de VERIFICACAO (CPU): roda o harness torch-free e a suite de testes inteira,
+# incluindo o golden-batch. Nenhum peso de modelo e' necessario.
+#
+#   python -m venv .venv
+#   .venv/Scripts/python -m pip install -r requirements-cpu.txt
+#   .venv/Scripts/python -m pytest
+#
+# As versoes sao as efetivamente usadas na verificacao do S1; ver harness/PORT_LOG.md.
+numpy==2.4.6
+scipy==1.18.0
+PyYAML==6.0.3
+pytest==8.4.2

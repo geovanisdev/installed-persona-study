@@ -16,9 +16,16 @@ Both are **AI personas with an honest substrate** — neither is presented as a 
 makes any claim about self-awareness or an internal self-model. See
 [What this study does not show](#what-this-study-does-not-show).
 
-> **Status: S0 — repository scaffold.** No model has been trained, no data has been generated, and
-> the pre-registration is not sealed yet. Everything below is the plan, published *before* the data
-> exists so that the ordering is verifiable from commit timestamps.
+> **Status: S1 — harness port in progress.** No model has been trained, no data has been generated,
+> and the pre-registration is not sealed yet. Everything below is the plan, published *before* the
+> data exists so that the ordering is verifiable from commit timestamps.
+
+**Verification (CPU, no model weights):**
+
+```
+python -m venv .venv && .venv/Scripts/python -m pip install -r requirements-cpu.txt
+.venv/Scripts/python -m pytest
+```
 
 ---
 
@@ -71,7 +78,7 @@ Gates between waves are human decisions; sealed thresholds are never adjusted af
 | Sprint | Deliverable | State |
 |---|---|---|
 | **S0** | Public repository scaffold | **done** |
-| **S1** | Harness ported from the pilot, parameterized, golden-batch verified | planned |
+| **S1** | Harness ported from the pilot, parameterized, golden-batch verified | **spine done**, GPU runners pending |
 | **S2** | Persona cores sealed + four public-domain corpora built | planned |
 | **S3** | **Sealed public pre-registration**: codebook, item banks, power analysis, endpoint list, α-budget | planned |
 | **S4** | Cross-family judge (Qwen3-8B) ported, calibrated, prompts frozen · **gate to Wave 2** | planned |

@@ -4,6 +4,12 @@ Training, generation, scoring and archiving code, **ported as adapted copies** f
 predecessor project (*GomesARCH*). Each ported file carries a provenance header naming its origin
 module.
 
+> **State.** The torch-free spine is ported and verified: persona cores (schema, seal, lexical
+> ruler), battery construction, statistical gates, transcript archiving, configuration. The
+> GPU-side runners are not ported yet. Consolidated record — including what changed, the six
+> dependencies missing from the original port list, and the open decisions — in
+> [`PORT_LOG.md`](PORT_LOG.md); fidelity report in [`goldens/GOLDEN_BATCH.md`](goldens/GOLDEN_BATCH.md).
+
 Porting rules (S1):
 
 - **Parameterize, do not hardcode.** `--core`, `--corpus`, `--judge-model`, `--base-model`,

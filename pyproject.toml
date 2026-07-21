@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "installed-persona-study"
+version = "0.1.0"
+description = "Pre-registered confirmatory study on installing a persona into model weights"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+dependencies = ["numpy>=2.0", "scipy>=1.14", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+# Caminho de GPU (treino/geracao/juiz). Instalado so' quando ha' janela de GPU; o
+# harness torch-free roda inteiro sem isto.
+gpu = ["torch>=2.5", "transformers>=5.13", "peft>=0.14", "bitsandbytes>=0.45", "accelerate>=1.0"]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools]
+packages = ["harness"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
