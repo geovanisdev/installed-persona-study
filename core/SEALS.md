@@ -60,6 +60,27 @@ O que **só você** pode decidir:
    em `influencias_nomeadas_nao_citadas`; o grounding é todo de domínio público. Nenhum
    texto deles entra em corpus, prompt, preâmbulo ou bateria.
 
+## Antes de selar, saiba disto: **F3 está sem instrumento**
+
+A predição declarada nos dois núcleos é que as personas **divergem apenas em F2 (postura)** e
+**coincidem em F1, F3 e F4**. Acontece que **F3 (consistência do núcleo) era pontuada pela
+régua lexical**, e a régua foi rebaixada a não-portão — ela reprova nos três polos (o polo de
+ruído tira nota máxima; ver `PREREGISTRATION.md`, Regra 2).
+
+Isso não invalida a predição, mas muda o que ela custa: **F3 só é testável quando existir um
+instrumento validado** — juiz de família cruzada aprovado em κ contra padrão-ouro cego e nos
+três polos (S4/S6). Três saídas possíveis, e é decisão sua:
+
+1. **Selar como está** e registrar que F3 fica pendente de instrumento — a predição existe,
+   o teste vem depois. É o caminho que preserva a predição pré-declarada.
+2. **Tirar F3 da predição** e deixá-la só em F1 e F4, tratando consistência de núcleo como
+   medida exploratória. Predição mais enxuta, e nenhuma promessa sem instrumento.
+3. **Adiar o selo** até o S4 fechar o juiz. Custa tempo e trava o S3, que depende dos núcleos
+   selados.
+
+Recomendo a **1**: a predição foi feita antes do dado, que é o que importa, e a dependência de
+instrumento fica declarada em vez de escondida.
+
 ## Limite conhecido da régua, encontrado ao construir estes núcleos
 
 O casamento de marcadores é por **subsequência contígua de tokens**. Um intensificador no
