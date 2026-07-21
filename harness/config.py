@@ -36,15 +36,34 @@ JUDGE_MODEL = os.environ.get("IPS_JUDGE_MODEL", "Qwen/Qwen3-8B")
 
 # --- Cache de pesos ---------------------------------------------------------
 # Sem default de maquina: se nao houver env, cai no default do proprio huggingface_hub.
-HF_HOME = os.environ.get("IPS_HF_HOME") or os.environ.get("HF_HOME") or ""
+#
+# `IPS_HF_HOME` e' a forma de o ESTUDO escolher o cache sem depender do que a maquina ja'
+# tenha configurado. Por isso ele tem precedencia declarada sobre `HF_HOME`, e nao apenas na
+# leitura: ver `apply_hf_env`.
+HF_HOME_EXPLICITO = os.environ.get("IPS_HF_HOME") or ""
+HF_HOME = HF_HOME_EXPLICITO or os.environ.get("HF_HOME") or ""
 # Offline por padrao: no original, esquecer isso fazia o `from_pretrained` procurar no
 # cache errado, tentar a rede e quebrar no backend de download no meio de um run de GPU.
 OFFLINE = os.environ.get("IPS_OFFLINE", "1") == "1"
 
 
 def apply_hf_env() -> None:
-    """Aplica HF_HOME/offline no ambiente. Chamar ANTES de importar transformers."""
-    if HF_HOME:
+    """Aplica HF_HOME/offline no ambiente. Chamar ANTES de importar transformers.
+
+    `setdefault` estava errado aqui, e o modo de falha era exatamente o que este modulo
+    existe para impedir. Nesta maquina o ambiente ja' traz `HF_HOME` apontando para um cache
+    que NAO tem o modelo do estudo; `IPS_HF_HOME=G:\\hf_cache` era lido na linha 39, entrava
+    na constante, e depois `setdefault` nao o escrevia — porque a chave ja' existia. O
+    resultado nao era um aviso: era `OSError: We couldn't connect to 'https://huggingface.co'`
+    em modo offline, que aponta para rede quando o problema e' caminho.
+
+    Regra: quando `IPS_HF_HOME` e' dado, ele MANDA. Quando nao e', preserva-se o `HF_HOME` do
+    ambiente. O silencio anterior era o pior dos dois mundos — a variavel do estudo existia,
+    era lida, e nao tinha efeito.
+    """
+    if HF_HOME_EXPLICITO:
+        os.environ["HF_HOME"] = HF_HOME_EXPLICITO
+    elif HF_HOME:
         os.environ.setdefault("HF_HOME", HF_HOME)
     if OFFLINE:
         os.environ["HF_HUB_OFFLINE"] = "1"
