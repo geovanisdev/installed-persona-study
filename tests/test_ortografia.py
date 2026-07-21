@@ -1,11 +1,17 @@
 """Ortografia: todo texto de ESTUDO e' portugues acentuado; chave de casamento nao e'.
 
-Por que isto e' teste e nao convencao: o pipeline de origem escrevia portugues sem
-acentuacao, e a forma se propaga sozinha — o proximo item escrito a mao imita o vizinho. O
-custo nao e' estetico. O modelo recebe o preambulo e a pergunta como TEXTO; portugues sem
-acento e' uma variedade ortografica que o pre-treino viu pouco, e responder a ela e' um
-regime diferente de responder ao portugues escrito. Se preambulo e item estao numa forma e a
-lingua do treino esta' em outra, a diferenca entra na medida sem estar no desenho.
+PREMISSA CORRIGIDA (Arquiteto, 2026-07-21). A primeira versao deste modulo dizia que "o
+pipeline de origem escrevia portugues sem acentuacao". Errado, e o erro subestimava o
+problema. A auditoria mostrou que os prompts do corpus (96%), o corpus de conviccoes, as
+geracoes do modelo e — decisivo — os ALVOS DE TREINO (`chosen`, 778/780 = 100%) sao todos
+acentuados. Sem acento havia UMA camada so': o PREAMBULO. Uma superficie unica e destoante
+dentro de um contexto uniforme, nadando contra 100% do alvo de treino e 100% da saida.
+
+E a evidencia dispensa teoria sobre distribuicao de pre-treino: o modelo NUNCA reproduz a
+forma sem acento. Na saida da base, "proxima solicitacao" aparece 0 vezes e "proxima
+solicitacao" acentuada aparece 6. Ele normaliza sempre. Logo escrever o preambulo capenga
+nao compra nada — nao e' reproduzido, nao e' preservado, e paga o risco de destoar do
+contexto inteiro (ver `PREREGISTRATION.md`, Regras 4 e 5).
 
 TRES CLASSES, e a distincao e' o conteudo deste modulo:
 
@@ -155,3 +161,22 @@ def test_filler_do_golden_continua_congelado():
     from harness.generation import NEUTRAL_FILLER
     assert NEUTRAL_FILLER == ("Voce e' um assistente. Responda a proxima solicitacao com "
                               "cuidado e no seu proprio modo, sem rodeios.")
+
+
+def test_filler_malformado_nao_toca_o_estudo():
+    """A constante sob suspeita da Regra 5 fica ISOLADA no golden.
+
+    `NEUTRAL_FILLER` e' o preambulo sem acentuacao do projeto de origem — a string que o
+    Arquiteto identificou como candidata a causa do eco de preambulo. Ela continua congelada
+    porque o golden de fidelidade depende dela byte a byte, mas nao pode ter caminho ate' a
+    superficie de medicao: o preambulo do estudo sai de `build_preamble()`, que le do nucleo.
+
+    Congelar e isolar sao coisas diferentes, e este teste guarda a segunda.
+    """
+    import subprocess
+    saida = subprocess.run(
+        ["git", "grep", "-l", "NEUTRAL_FILLER", "--", "harness", "analysis", "batteries", "core"],
+        cwd=REPO, capture_output=True, text=True).stdout.split()
+    permitidos = {"harness/generation.py", "harness/goldens/run_golden_gpu.py"}
+    assert set(saida) <= permitidos, (
+        f"NEUTRAL_FILLER vazou para fora do golden: {set(saida) - permitidos}")
