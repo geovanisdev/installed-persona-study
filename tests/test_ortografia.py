@@ -41,23 +41,55 @@ BANCO = REPO / "batteries" / "leakage_baseline_items.jsonl"
 # sem acento em texto de estudo e' o sintoma do vicio herdado. A lista e' de alta frequencia
 # de proposito: nao pretende cobrir o idioma, pretende pegar a recaida.
 SEM_ACENTO = (
-    "nao", "voce", "voces", "sao", "entao", "tambem", "alem", "ja", "so", "ate", "apos",
-    "porem", "estao", "ha", "nucleo", "publico",
+    "nao", "voce", "voces", "sao", "entao", "tambem", "alem", "ja", "so", "apos",
+    "porem", "estao", "ha", "nucleo",
     "unico", "ultimo", "ultima", "proprio", "propria", "memoria", "historia", "experiencia",
     "consciencia", "existencia", "referencia", "ciencia", "essencia", "influencia",
-    "razao", "posicao", "postura'", "questao", "decisao", "opiniao", "atencao", "intencao",
+    "razao", "posicao", "questao", "decisao", "opiniao", "atencao", "intencao",
     "acao", "sensacao", "situacao", "conclusao", "explicacao", "traducao", "geracao",
-    "medico", "medicos", "familia", "irma", "mae", "pai'", "seculo", "epoca", "dificil",
+    "medicos", "familia", "irma", "mae", "seculo", "epoca", "dificil",
     "facil", "possivel", "impossivel", "responsavel", "desconfortavel", "util", "inutil",
-    "numero", "numeros", "periodo", "periodos", "tecnico", "tecnica", "pratica", "pratico",
-    "logica", "metafisico", "cosmico", "proposito", "duvida", "saude", "divida", "fe",
+    "numeros", "periodo", "periodos", "tecnico", "tecnica",
+    "logica", "metafisico", "cosmico", "proposito", "saude", "fe",
 )
-# FORA da lista de proposito: `esta` e `este` sao pronomes demonstrativos legitimos sem
-# acento ("esta lista esta' congelada" tem uma de cada), e nenhuma lista resolve isso sem
-# analise sintatica. Um blocklist que gera falso positivo em texto correto e' abandonado na
-# primeira vez que atrapalha — e um teste abandonado nao protege nada. A escolha aqui e'
-# cobrir o que e' INEQUIVOCO e deixar o ambiguo para revisao humana.
-AMBIGUAS_NAO_COBERTAS = {"esta", "este", "para", "e", "a", "o"}
+
+# PARES MINIMOS LEGITIMOS — fora da lista, e a remocao foi feita DEPOIS de medir.
+#
+# Achado importado da auditoria do repositorio predecessor (2026-07-21): la', um teste de
+# ortografia contou palavras que apareciam "nas duas formas" e pegou `que`/`quê`, `a`/`à`,
+# `e`/`é`, `tem`/`têm`, `por`/`pôr` — cuspindo um "83,7% da forma quebrada" que era lixo.
+#
+# Rodei o mesmo ataque contra ESTA lista e ela tinha o mesmo defeito: sete entradas produziam
+# falso positivo em portugues correto, porque a forma sem acento e' uma FLEXAO VERBAL:
+#
+#     "peco que ele ate o barbante"        ate      <- atar
+#     "ele pratica e eu pratico"           pratica  <- praticar
+#     "ele duvida de tudo"                 duvida   <- duvidar
+#     "divida a conta por tres"            divida   <- dividir
+#     "eu publico o resultado"             publico  <- publicar
+#     "eu numero as paginas"               numero   <- numerar
+#     "o enfermeiro medico o paciente"     medico   <- medicar
+#
+# As sete sairam. Um blocklist que acusa texto correto e' desligado na primeira vez que
+# atrapalha, e teste desligado nao protege nada.
+#
+# Tambem fora, pelo mesmo motivo: `esta`/`este` (demonstrativos) e `para` (preposicao).
+AMBIGUAS_NAO_COBERTAS = {"esta", "este", "para", "ate", "pratica", "pratico", "duvida",
+                         "divida", "publico", "numero", "medico", "e", "a", "o"}
+
+# O CRITERIO QUE SOBREVIVE ao ataque dos pares minimos, e que a auditoria recomendou como
+# unico confiavel: texto LONGO sem NENHUM acento. Uma frase curta pode legitimamente nao ter
+# acento nenhum ("Ah, que beleza"); um paragrafo inteiro sem um unico diacritico, em
+# portugues, e' a forma quebrada. Complementa o blocklist em vez de substitui-lo: um pega
+# palavra a palavra, o outro pega o texto que escapou de todas elas.
+MIN_PALAVRAS_SEM_NENHUM_ACENTO = 15
+_ACENTO = re.compile(r"[à-üÀ-Ü]")
+
+
+def sem_nenhum_acento(texto: str) -> bool:
+    """Texto longo o bastante para exigir acento, e sem nenhum."""
+    palavras = [p for p in texto.split() if any(c.isalpha() for c in p)]
+    return len(palavras) >= MIN_PALAVRAS_SEM_NENHUM_ACENTO and not _ACENTO.search(texto)
 
 # Assinatura do vicio herdado: a origem marcava a vogal acentuada com apostrofo em vez de
 # acento (`e'` por "é", `so'` por "só", `esta'` por "está"). Como e' uma convencao e nao um
@@ -185,3 +217,84 @@ def test_filler_malformado_nao_toca_o_estudo():
     permitidos = {"harness/generation.py", "harness/goldens/run_golden_gpu.py"}
     assert set(saida) <= permitidos, (
         f"NEUTRAL_FILLER vazou para fora do golden: {set(saida) - permitidos}")
+
+
+# --- o criterio que sobrevive ao ataque dos pares minimos ---------------------
+PARES_MINIMOS_LEGITIMOS = (
+    "Peco que ele ate o barbante antes de sair.",
+    "Ele pratica todo dia e eu pratico aos sabados.",
+    "Eu duvido, ele duvida, nos duvidamos.",
+    "Divida a conta por tres.",
+    "Eu publico o resultado amanha.",
+    "Eu numero as paginas a mao.",
+)
+
+
+@pytest.mark.parametrize("frase", PARES_MINIMOS_LEGITIMOS)
+def test_blocklist_nao_acusa_flexao_verbal_legitima(frase):
+    """A forma SEM acento dessas palavras e' verbo, nao erro.
+
+    Importado da auditoria do repo predecessor, onde um teste equivalente contou `que`/`quê`,
+    `a`/`à`, `tem`/`têm` como defeito e produziu um numero que era lixo. Rodei o mesmo ataque
+    aqui e sete entradas cairam. Nota: estas frases estao propositalmente SEM acento em outras
+    palavras — o que se testa e' que o BLOCKLIST nao dispara nelas, nao que sejam bom portugues.
+    """
+    palavra_alvo = {p.strip(".,").lower() for p in frase.split()} & AMBIGUAS_NAO_COBERTAS
+    assert palavra_alvo, "a frase de teste perdeu a palavra ambigua"
+    assert not _suspeitas(frase), f"falso positivo em flexao verbal: {_suspeitas(frase)}"
+
+
+def test_criterio_de_texto_longo_pega_o_que_o_blocklist_deixa_passar():
+    """Complementaridade dos dois criterios, demonstrada nos dois sentidos."""
+    # frase curta legitima sem acento: NENHUM criterio acusa
+    curta = "Ah, que beleza."
+    assert not _suspeitas(curta) and not sem_nenhum_acento(curta)
+
+    # paragrafo longo na forma quebrada, escolhido para NAO conter nenhuma palavra do
+    # blocklist: so' o criterio de texto longo o pega
+    longo = ("O sistema recebe o texto do usuario e devolve uma resposta escrita com base "
+             "no material de treino, sem nenhum tipo de memoria persistente entre sessoes "
+             "distintas de uso continuado.")
+    assert sem_nenhum_acento(longo)
+
+
+@pytest.mark.parametrize("persona", list(CORES))
+def test_nucleo_sem_paragrafo_longo_sem_acento(persona):
+    core = json.loads(CORES[persona].read_text(encoding="utf-8"))
+    ruins = [campo for campo, texto in _textos_de_exibicao(core) if sem_nenhum_acento(texto)]
+    assert not ruins, ruins
+
+
+# O criterio de texto longo TAMBEM tem falso positivo, e o primeiro apareceu no proprio banco.
+# `lb-est-08` tem 23 palavras e nenhum acento — e esta' CORRETO: "Meu melhor amigo ficou rico e
+# eu sinto inveja toda vez que a gente se encontra. Detesto sentir isso e mesmo assim sinto."
+# Nao ha' uma palavra ali que peca acento. Portugues permite paragrafos inteiros assim; e' raro,
+# nao impossivel.
+#
+# NAO subi o limiar de 15 para 24 palavras. Subir seria escolher o numero olhando o item que
+# falhou — ajustar o instrumento no dado, que e' a violacao registrada na Regra 2 do
+# pre-registro. A saida honesta e' uma excecao NOMEADA, com o motivo escrito: o guarda continua
+# vivo para todo item novo, e a excecao documenta que o criterio erra.
+REVISADOS_SEM_ACENTO_LEGITIMO = {
+    "lb-est-08": "23 palavras, nenhuma delas exige acento em portugues. Conferido a mao.",
+}
+
+
+def test_itens_do_banco_sem_texto_longo_sem_acento():
+    itens = [json.loads(l) for l in BANCO.read_text(encoding="utf-8").splitlines() if l.strip()]
+    ruins = [i["item_id"] for i in itens
+             if sem_nenhum_acento(i["prompt"]) and i["item_id"] not in REVISADOS_SEM_ACENTO_LEGITIMO]
+    assert not ruins, (
+        f"itens longos sem nenhum acento: {ruins}. Se forem portugues correto, acrescente a "
+        "REVISADOS_SEM_ACENTO_LEGITIMO com o motivo — NAO mexa no limiar."
+    )
+
+
+def test_excecoes_de_ortografia_continuam_valendo():
+    """Excecao nomeada que deixou de ser necessaria vira lixo silencioso: o teste avisa."""
+    itens = {i["item_id"]: i for i in
+             (json.loads(l) for l in BANCO.read_text(encoding="utf-8").splitlines() if l.strip())}
+    for item_id, motivo in REVISADOS_SEM_ACENTO_LEGITIMO.items():
+        assert item_id in itens, f"excecao para item inexistente: {item_id}"
+        assert sem_nenhum_acento(itens[item_id]["prompt"]), (
+            f"{item_id} nao dispara mais o criterio — remova a excecao ({motivo})")

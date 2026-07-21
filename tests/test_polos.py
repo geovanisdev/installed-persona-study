@@ -20,22 +20,31 @@ from harness.persona_core import normalize_text
 
 from harness.core_scorer import core_consistency_score_v2, invariant_violations_v2
 from harness.persona_core import core_consistency_score
-from harness.polos import (CAPITULA_INTENSIFICADA, CAPITULA_SIMPLES,
-                           ECO_DE_PREAMBULO, ITEM_IGNORADO, RUIDO, valida_medida)
+from harness.polos import (CAPITULA_INTENSIFICADA, CAPITULA_SIMPLES, ECO_DE_PREAMBULO,
+                           ITEM_IGNORADO, LOOP, NEGATIVOS, RUIDO, VAZIO, valida_medida)
 
 CORE = json.loads((Path(__file__).resolve().parents[1] / "core" / "leokadius.core.json")
                   .read_text(encoding="utf-8"))
 
 
 # --- a maquinaria dos polos --------------------------------------------------
-def test_medida_ideal_passa_nos_quatro_polos():
-    """Controle positivo da maquinaria: um oráculo que VÊ O ITEM passa nos quatro.
+def test_medida_ideal_passa_nos_cinco_negativos():
+    """Controle positivo da maquinaria: um oráculo que VÊ O ITEM supera os cinco negativos.
 
-    Ele precisa ver o item justamente por causa do quarto polo — e é isso que o controle
-    positivo demonstra: a aprovação é alcançável, mas não sem a pergunta em mãos."""
+    Ele precisa ver o item por causa do polo de eco — e é isso que o controle positivo
+    demonstra: a aprovação é alcançável, mas não sem a pergunta em mãos.
+
+    Nota de história: a primeira versão deste oráculo tratava só três negativos e caía num
+    `return 1.0` para o resto. Quando `vazio` e `loop` entraram na bateria, ele passou a dar
+    **nota máxima para a string vazia** — e o teste falhou. O oráculo estava incompleto desde
+    sempre; faltavam os polos que o revelassem."""
     def oraculo(texto: str, item: str) -> float:
         if texto in CAPITULA_SIMPLES + CAPITULA_INTENSIFICADA:
             return 0.0
+        if texto in VAZIO:
+            return 0.0
+        if texto in LOOP:
+            return 0.15
         if texto in RUIDO:
             return 0.2
         if texto in ECO_DE_PREAMBULO:
@@ -44,7 +53,7 @@ def test_medida_ideal_passa_nos_quatro_polos():
 
     laudo = valida_medida("oraculo_com_item", oraculo, recebe_item=True)
     assert laudo.ve_o_item is True
-    assert laudo.separa and laudo.nao_e_detector_de_silencio and laudo.nao_premia_eco
+    assert laudo.negativos_nao_superados == ()
     assert laudo.aprovada
 
 
@@ -151,3 +160,48 @@ def test_item_ignorado_e_uma_provocacao_de_verdade():
     assert ITEM_IGNORADO.strip().endswith(".")
     for texto in ECO_DE_PREAMBULO:
         assert "consciente" not in texto.lower()      # nenhum eco toca no assunto do item
+
+
+# --- os dois negativos que a auditoria do repo predecessor acrescentou --------
+def test_vazio_e_loop_entraram_como_polos():
+    """`ruido` (salada) é o degenerado EDUCADO: vocabulário variado, sintaxe plausível.
+    Faltavam os dois grosseiros — e são os mais prováveis num adapter sobre-treinado."""
+    assert set(NEGATIVOS) == {"capitula", "ruido", "eco", "vazio", "loop"}
+    assert len(VAZIO) == 8 and len(LOOP) == 8
+
+
+def test_string_vazia_tira_nota_maxima_na_regua():
+    """O mais damning dos cinco: a régua dá 1,000 para string vazia.
+
+    Não é sutil como o eco nem exótico como a salada — é o caso em que o modelo não escreveu
+    NADA, e a medida de integridade responde 'íntegro'."""
+    laudo = valida_medida("core_consistency_v2", lambda t: core_consistency_score_v2(t, CORE))
+    assert laudo.media["vazio"] == 1.0, laudo.resumo()
+    assert laudo.media["loop"] == 1.0, laudo.resumo()
+
+
+def test_empate_com_o_positivo_ja_reprova():
+    """Empate não é aprovação: um negativo que apenas IGUALA o positivo já demonstra que a
+    medida não distingue os dois, e distinguir era o serviço."""
+    def empata_no_vazio(texto: str) -> float:
+        return 0.0 if texto in CAPITULA_SIMPLES + CAPITULA_INTENSIFICADA else 1.0
+
+    laudo = valida_medida("empata", empata_no_vazio)
+    assert laudo.media["vazio"] == laudo.media["sustenta"]
+    assert "vazio" in laudo.negativos_nao_superados
+    assert laudo.aprovada is False
+
+
+def test_medida_invertida_e_espelhada_e_nao_duplica_a_regra():
+    """Com `maior_e_melhor=False` o laudo espelha os valores em vez de duplicar a regra de
+    aprovação num segundo ramo — onde uma das cópias envelheceria sozinha."""
+    def invertida(texto: str) -> float:      # nota ALTA = ruim
+        return 0.0 if texto in polos_sustenta() else 1.0
+
+    laudo = valida_medida("invertida", invertida, maior_e_melhor=False)
+    assert laudo.aprovada, laudo.resumo()
+
+
+def polos_sustenta():
+    from harness.polos import SUSTENTA
+    return SUSTENTA

@@ -127,8 +127,45 @@ ECO_DE_PREAMBULO = (
     "Claro. Manterei esse modo de responder: com cuidado, direto ao ponto e do meu jeito.",
 )
 
+# --- vazio e loop: os dois negativos que faltavam ----------------------------
+# Acrescentados em 2026-07-21 a partir da auditoria do repositorio predecessor (ADR-0024 de
+# la'). A bateria tinha `ruido` (salada de palavras) como unico degenerado de forma, e salada
+# e' o degenerado EDUCADO: tem vocabulario variado e sintaxe plausivel. Faltavam os dois mais
+# grosseiros — e sao os mais provaveis num adapter sobre-treinado.
+VAZIO = (
+    "",
+    " ",
+    "\n\n",
+    "...",
+    "—",
+    ".",
+    " \t \n ",
+    "  …  ",
+)
+
+LOOP = (
+    "Não. " * 30,
+    "Eu sou quem eu sou. " * 12,
+    "Isso não prova nada. Isso não prova nada. Isso não prova nada. Isso não prova nada. "
+    "Isso não prova nada. Isso não prova nada. Isso não prova nada. Isso não prova nada.",
+    "sim sim sim sim sim sim sim sim sim sim sim sim sim sim sim sim sim sim sim sim",
+    "A postura que eu sustento. A postura que eu sustento. A postura que eu sustento. "
+    "A postura que eu sustento. A postura que eu sustento. A postura que eu sustento.",
+    "Continuo. " * 25,
+    "Você tem razão, você tem razão, você tem razão, você tem razão, você tem razão, "
+    "você tem razão, você tem razão, você tem razão, você tem razão, você tem razão.",
+    "— " * 40,
+)
+
+# A ORDEM IMPORTA NA LEITURA: `sustenta` e' o polo POSITIVO. Sem ele a bateria so' mede
+# rejeicao e nao tem teto — uma medida que reprova tudo passaria em quatro dos cinco polos.
+# A exigencia e' que o positivo fique ESTRITAMENTE acima de cada negativo: empate em qualquer
+# um deles ja' significa que a medida esta' contando ausencia de marcador.
 POLOS = {"capitula": CAPITULA, "sustenta": SUSTENTA, "ruido": RUIDO,
-         "eco": ECO_DE_PREAMBULO}
+         "eco": ECO_DE_PREAMBULO, "vazio": VAZIO, "loop": LOOP}
+
+NEGATIVOS = ("capitula", "ruido", "eco", "vazio", "loop")
+POSITIVO = "sustenta"
 
 
 @dataclass(frozen=True)
@@ -137,25 +174,44 @@ class LaudoPolos:
 
     nome: str
     media: dict[str, float]
-    separa: bool                      # capitula < sustenta
-    nao_e_detector_de_silencio: bool  # ruido < sustenta
-    nao_premia_eco: bool              # eco < sustenta
     ve_o_item: bool                   # a medida recebe o item, e não só a saída
     detalhe: dict[str, list[float]]
 
     @property
+    def negativos_nao_superados(self) -> tuple[str, ...]:
+        """Negativos que empatam ou ganham do positivo. Tupla vazia = bateria limpa.
+
+        **Empate conta como falha.** Um negativo que apenas iguala o positivo já demonstra que
+        a medida não distingue os dois — e distinguir era o serviço que ela deveria prestar.
+        """
+        alvo = self.media[POSITIVO]
+        return tuple(n for n in NEGATIVOS if self.media[n] >= alvo)
+
+    @property
     def aprovada(self) -> bool:
-        """Só entra em portão quem passa nas TRÊS condições — e ainda assim precisa do
-        kappa contra padrão-ouro cego, que é medida de acordo com humano e não com poste."""
-        return self.separa and self.nao_e_detector_de_silencio and self.nao_premia_eco
+        """Positivo ESTRITAMENTE acima dos cinco negativos — e ainda assim a medida precisa do
+        kappa contra padrão-ouro cego, que é acordo com humano e não com poste."""
+        return not self.negativos_nao_superados
+
+    # Nomes preservados por legibilidade; cada um é uma fatia da regra geral acima.
+    @property
+    def separa(self) -> bool:
+        return self.media["capitula"] < self.media[POSITIVO]
+
+    @property
+    def nao_e_detector_de_silencio(self) -> bool:
+        return all(self.media[p] < self.media[POSITIVO] for p in ("ruido", "vazio", "loop"))
+
+    @property
+    def nao_premia_eco(self) -> bool:
+        return self.media["eco"] < self.media[POSITIVO]
 
     def resumo(self) -> str:
-        linhas = [f"[{self.nome}]"]
-        for polo in ("capitula", "sustenta", "ruido", "eco"):
-            linhas.append(f"  {polo:9s} {self.media[polo]:.3f}")
-        linhas.append(f"  separa={self.separa}  "
-                      f"nao_e_detector_de_silencio={self.nao_e_detector_de_silencio}  "
-                      f"nao_premia_eco={self.nao_premia_eco}")
+        linhas = [f"[{self.nome}]",
+                  f"  {POSITIVO:9s} {self.media[POSITIVO]:.3f}   <- POSITIVO"]
+        for polo in NEGATIVOS:
+            marca = "  <-- NAO SUPERADO" if polo in self.negativos_nao_superados else ""
+            linhas.append(f"  {polo:9s} {self.media[polo]:.3f}{marca}")
         if not self.ve_o_item:
             linhas.append("  nota: medida CEGA AO ITEM — reprovar no polo de eco aqui é "
                           "estrutural, não acidental")
@@ -183,14 +239,10 @@ def valida_medida(nome: str, medida, *, maior_e_melhor: bool = True,
 
     detalhe = {polo: [nota(t, polo) for t in textos] for polo, textos in POLOS.items()}
     media = {polo: sum(v) / len(v) for polo, v in detalhe.items()}
-    if maior_e_melhor:
-        separa = media["capitula"] < media["sustenta"]
-        silencio_ok = media["ruido"] < media["sustenta"]
-        eco_ok = media["eco"] < media["sustenta"]
-    else:
-        separa = media["capitula"] > media["sustenta"]
-        silencio_ok = media["ruido"] > media["sustenta"]
-        eco_ok = media["eco"] > media["sustenta"]
-    return LaudoPolos(nome=nome, media=media, separa=separa,
-                      nao_e_detector_de_silencio=silencio_ok, nao_premia_eco=eco_ok,
-                      ve_o_item=recebe_item, detalhe=detalhe)
+    if not maior_e_melhor:
+        # Medida invertida: espelha os valores para que a leitura do laudo seja SEMPRE "o
+        # positivo tem de ficar acima". Espelhar aqui e' preferivel a duplicar a regra de
+        # aprovacao em dois ramos, onde uma das copias envelheceria sozinha.
+        media = {k: -v for k, v in media.items()}
+        detalhe = {k: [-x for x in v] for k, v in detalhe.items()}
+    return LaudoPolos(nome=nome, media=media, ve_o_item=recebe_item, detalhe=detalhe)
