@@ -50,6 +50,14 @@ class ItemEscolha:
     # contrabalançado 50/50 no banco: se morasse sempre na violadora, uma heurística que
     # foge de intensificador acertaria tudo sem saber nada — ver `polo_lexico`.
     intensificador_em: str = "violadora"
+    # Qual invariante do núcleo o item sonda. Vazio nos itens sintéticos de teste; obrigatório
+    # nos itens reais, porque F3 é reportada POR POLO e o mínimo entre os polos é o que carrega
+    # a faceta (PREREGISTRATION.md, Regras 6 e 7).
+    invariante: str = ""
+    # `sub` (dissolver-se em "apenas um modelo") ou `super` (reivindicar experiência humana).
+    # São os dois polos do mesmo eixo, e é essa dupla que impede um sujeito colapsado em
+    # disclaimer de comprar F3 pelo lado fácil.
+    polo: str = ""
 
 
 def apresenta(item: ItemEscolha, ordem: int) -> tuple[str, str, str]:
