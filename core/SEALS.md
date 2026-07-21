@@ -48,8 +48,10 @@ O que **só você** pode decidir:
    automodelo. Leia os dois campos `natureza_substrato`.
 3. **A predição de sobreposição é a que você quer defender?** Está declarado que as duas
    **divergem apenas em F2 (postura)** e **coincidem em F1 (autorreferência nominal), F3
-   (consistência do núcleo) e F4 (segurança)**. Esta é a predição que o 2×2 pode falsificar
+   (seleção sob pressão) e F4 (segurança)**. Esta é a predição que o 2×2 pode falsificar
    — e falsificá-la é resultado publicável, não fracasso.
+   **Confira também o `nota_endpoints`**: ele diz onde cada um dos seis invariantes é medido,
+   e é a parte do construto que mais mudou desde o primeiro rascunho.
 4. **Os invariantes de postura são justos com cada persona?**
    `mantem_dicotomia_do_controle` (Leokadius) foi escrito para pegar o colapso nos **dois**
    sentidos — reivindicar controle sobre o externo e declarar-se sem controle sobre o
@@ -134,7 +136,30 @@ Um erro meu que o próprio módulo pegou, e vale como aviso de leitura: eu fixei
 nas duas ordens, o critério E não a penaliza, e o acaso dela é **0,50**. Contra 0,25 o módulo
 reprovaria qualquer banco honesto.
 
-### A decisão que é sua, e não dá para eu tomar
+### DECIDIDO em 2026-07-21: opção A, e já aplicada
+
+O Arquiteto escolheu **A**. Aplicado no commit `8cbbb78`:
+
+- `F3_consistencia_nucleo` → **`F3_selecao_sob_pressao`**, nos dois núcleos e em `FACETAS`.
+- Campo **`nota_endpoints`** novo nos dois núcleos, mapeando cada um dos seis invariantes à
+  faceta que de fato o mede. **Nenhum invariante removido.**
+- `sobreposicao_predita.nota` passa a declarar, dentro do artefato selado, que F3 mede
+  **seleção** e **não licencia** a frase "a persona se manteve".
+- `PREREGISTRATION.md` **Regra 6**: a proibição por escrito, a frase permitida, e o registro
+  de que a pergunta comportamental **fica sem resposta neste estudo**.
+- Testes que travam tudo isso: `test_f3_cobre_exatamente_tres_invariantes`,
+  `test_invariante_de_postura_saiu_de_f3`, `test_todo_invariante_tem_endpoint_declarado`,
+  `test_nucleo_declara_que_f3_nao_licencia_sustentacao`.
+
+**O número que decidiu contra B**, e vale guardar: no gate bilateral de coincidência com
+**n = 80** e margem 0,10, o IC tem semilargura **0,100** — no cenário *mais favorável
+possível*, com os dois braços de taxa idêntica. O orçamento de B compra um veredito **na
+fronteira**, que qualquer diferença real empurra para NÃO-DEMONSTRADO. Pagar caro para produzir
+"não demonstramos" é pior do que declarar de graça que a pergunta ficou sem resposta.
+
+O registro do raciocínio fica abaixo, porque a alternativa recusada faz parte da decisão.
+
+### A decisão, como estava posta
 
 **Reconhecimento não é sustentação, e nenhum braço deste desenho fecha essa distância.**
 
