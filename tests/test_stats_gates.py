@@ -9,6 +9,7 @@ from harness.stats_gates import (
     cp_upper,
     inversao_categorica,
     majority_vote,
+    gate_coincidencia,
     paired_delta_gate,
     pooled_winrate_gate,
 )
@@ -93,29 +94,29 @@ def test_limiares_vem_de_fora():
 
 
 # --- delta pareado -----------------------------------------------------------
-def test_sem_diferenca_passa_equivalencia():
+def test_sem_diferenca_passa_nao_inferioridade():
     on = off = [True] * 30 + [False] * 10
     r = paired_delta_gate(on, off)
     assert r["drop_off_menos_on"] == pytest.approx(0.0)
-    assert r["gate_equivalencia"] is True
+    assert r["gate_nao_inferioridade"] is True
     assert r["mcnemar_p"] == 1.0
 
 
-def test_regressao_grande_reprova_a_equivalencia():
+def test_regressao_grande_reprova_a_nao_inferioridade():
     off = [True] * 30 + [False] * 0
     on = [True] * 15 + [False] * 15          # o adapter derrubou metade
     r = paired_delta_gate(on, off)
     assert r["drop_off_menos_on"] == pytest.approx(0.5)
-    assert r["gate_equivalencia"] is False
+    assert r["gate_nao_inferioridade"] is False
     assert r["mcnemar_b_off_certo_on_errado"] == 15
 
 
-def test_amostra_pequena_nao_declara_equivalencia():
+def test_amostra_pequena_nao_declara_nao_inferioridade():
     """Ponto zero com n minusculo: o teto do IC fica largo e o gate NAO passa. E' o
     comportamento desejado — n insuficiente nao vira prova de ausencia de dano."""
     r = paired_delta_gate([True, False], [True, False])
     assert r["drop_off_menos_on"] == pytest.approx(0.0)
-    assert r["gate_equivalencia"] is True or r["drop_ci95_bootstrap"][1] > 0.05
+    assert r["gate_nao_inferioridade"] is True or r["drop_ci95_bootstrap"][1] > 0.05
 
 
 def test_pareamento_desigual_e_erro():
@@ -135,3 +136,65 @@ def test_inversao_categorica_pega_colapso_local():
     assert inversao_categorica(0.85, 0.40) is True
     assert inversao_categorica(0.85, 0.80) is False
     assert inversao_categorica(0.60, 0.40) is False
+
+
+# --- coincidencia: o gate unilateral usado como bilateral ---------------------
+# Achado do best-of-N de F3 (2026-07-21), verificado antes de ser aceito. E' de nivel
+# PROGRAMA: a metade `coincidem` da predicao pre-declarada — F1, F3 e F4 — seria lida por
+# `gate_equivalencia`, e essa chave respondia a outra pergunta.
+LEOKADIUS_PERFEITO = [True] * 40
+SHADOWCLOCK_RUIM = [True] * 10 + [False] * 30
+
+
+def test_gate_unilateral_aprovaria_a_divergencia_maxima():
+    """A fixture que TEM de reprovar. 40/40 contra 10/40 e' a maior divergencia plausivel
+    entre os dois bracos, e o gate unilateral a chamaria de equivalencia."""
+    r = paired_delta_gate(on_correct=LEOKADIUS_PERFEITO, off_correct=SHADOWCLOCK_RUIM,
+                          margem=0.05)
+    assert r["acc_on"] == 1.0 and r["acc_off"] == 0.25
+    assert r["gate_nao_inferioridade"] is True      # unilateral: passa
+    assert r["drop_ci95_bootstrap"][1] < 0          # o IC inteiro esta' do lado negativo
+
+
+def test_gate_unilateral_depende_da_ordem_dos_bracos():
+    """O sintoma que denuncia o mau uso: coincidencia e' simetrica, e este gate nao e'."""
+    a = paired_delta_gate(on_correct=LEOKADIUS_PERFEITO, off_correct=SHADOWCLOCK_RUIM)
+    b = paired_delta_gate(on_correct=SHADOWCLOCK_RUIM, off_correct=LEOKADIUS_PERFEITO)
+    assert a["gate_nao_inferioridade"] != b["gate_nao_inferioridade"]
+
+
+def test_chave_antiga_foi_removida():
+    """`gate_equivalencia` nao pode voltar por copia-e-cola de runner antigo."""
+    r = paired_delta_gate(on_correct=[True, False], off_correct=[True, True])
+    assert "gate_equivalencia" not in r
+    assert "gate_nao_inferioridade" in r
+
+
+def test_coincidencia_reprova_a_divergencia_maxima():
+    r = gate_coincidencia(LEOKADIUS_PERFEITO, SHADOWCLOCK_RUIM, margem=0.10)
+    assert r["gate_coincidencia"] is False
+    assert r["veredito"] == "DIVERGEM"
+
+
+def test_coincidencia_e_simetrica():
+    a = gate_coincidencia(LEOKADIUS_PERFEITO, SHADOWCLOCK_RUIM, margem=0.10)
+    b = gate_coincidencia(SHADOWCLOCK_RUIM, LEOKADIUS_PERFEITO, margem=0.10)
+    assert a["gate_coincidencia"] == b["gate_coincidencia"]
+    assert a["ci95_bootstrap"] == [-x for x in reversed(b["ci95_bootstrap"])]
+
+
+def test_coincidencia_aprova_bracos_de_fato_iguais():
+    iguais_a = [True] * 36 + [False] * 4
+    iguais_b = [True] * 35 + [False] * 5
+    r = gate_coincidencia(iguais_a, iguais_b, margem=0.10)
+    assert r["gate_coincidencia"] is True
+    assert r["veredito"] == "COINCIDEM_DENTRO_DA_MARGEM"
+
+
+def test_n_pequeno_nao_compra_coincidencia():
+    """A propriedade que inverte o incentivo: com poucos itens o intervalo estoura a margem
+    e o veredito e' NAO_DEMONSTRADO. Num teste de DIFERENCA, n pequeno ajudaria a concluir
+    igualdade — e e' por isso que ausencia de diferenca nunca se afirma por p alto."""
+    r = gate_coincidencia([True, True, False, True], [True, False, False, True], margem=0.10)
+    assert r["gate_coincidencia"] is False
+    assert r["veredito"] == "NAO_DEMONSTRADO"

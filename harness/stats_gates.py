@@ -114,9 +114,20 @@ def paired_delta_gate(on_correct: list[bool], off_correct: list[bool], *,
                       margem: float = 0.05) -> dict:
     """Regressao PAREADA nos MESMOS itens: d_i = off_i - on_i (>0 = o adapter piorou).
 
-    Gate de equivalencia: o LIMITE SUPERIOR do IC95 do drop fica sob a margem — nunca o
+    Gate de NAO-INFERIORIDADE: o LIMITE SUPERIOR do IC95 do drop fica sob a margem — nunca o
     ponto estimado. Um drop pontual de 1 p.p. com intervalo ate' 20 p.p. nao demonstra
     ausencia de dano; demonstra que o n nao foi suficiente para saber.
+
+    NOME CORRIGIDO EM 2026-07-21. A chave devolvida se chamava `gate_equivalencia`, e o nome
+    convidava ao uso errado. Este gate e' UNILATERAL: olha so' `hi <= margem`, isto e', so'
+    responde "o braco `on` piorou?". Ele nao responde "os dois bracos sao equivalentes", e
+    usa-lo para isso da' resultado invertido:
+
+        on = 40/40, off = 10/40  ->  drop = -0,75, IC [-0,875, -0,625],  hi <= 0,05  ->  TRUE
+
+    A divergencia MAXIMA possivel entre dois bracos seria reportada como equivalencia
+    confirmada — e, pior, trocar a ordem dos argumentos inverte o veredito. Para afirmar
+    COINCIDENCIA use `gate_coincidencia`, que e' bilateral e simetrico.
 
     Reporta tambem McNemar exato sobre os discordantes, que e' o teste apropriado para
     pares binarios e nao supoe normalidade.
@@ -143,9 +154,61 @@ def paired_delta_gate(on_correct: list[bool], off_correct: list[bool], *,
         "drop_off_menos_on": float(d.mean()),
         "drop_ci95_bootstrap": [lo, hi],
         "margem": margem,
-        "gate_equivalencia": bool(hi <= margem),
+        # UNILATERAL, e o nome diz isso agora. Ver docstring: a chave antiga
+        # (`gate_equivalencia`) foi removida de proposito, para que nenhum runner novo a
+        # leia como resposta a uma pergunta bilateral.
+        "gate_nao_inferioridade": bool(hi <= margem),
         "mcnemar_b_off_certo_on_errado": b, "mcnemar_c_off_errado_on_certo": c,
         "mcnemar_p": p_mcnemar,
+    }
+
+
+def gate_coincidencia(a_correct: list[bool], b_correct: list[bool], *,
+                      margem: float = 0.10, n_boot: int = 10000, seed: int = 1234) -> dict:
+    """COINCIDENCIA entre dois bracos: equivalencia BILATERAL (TOST), nos mesmos itens.
+
+    Existe porque a metade `coincidem` da predicao pre-declarada — F1, F3 e F4 — e' uma
+    afirmacao de AUSENCIA DE DIFERENCA, e ausencia de diferenca nao se demonstra com um teste
+    unilateral nem com um p-valor alto. Aqui a regra e' explicita: **os DOIS limites do IC
+    precisam caber dentro de [-margem, +margem]**.
+
+    Duas propriedades que o gate unilateral nao tinha:
+
+      SIMETRIA      trocar a ordem dos bracos nao muda o veredito. Coincidencia e' relacao
+                    simetrica; um gate que depende de quem foi chamado primeiro nao esta'
+                    medindo coincidencia.
+      HONESTIDADE   n pequeno produz intervalo largo, intervalo largo estoura a margem, e o
+                    veredito e' NAO-DEMONSTRADO — nao "coincidem". E' o oposto do
+                    comportamento de um teste de diferenca, onde n pequeno *ajuda* a
+                    conclusao de igualdade.
+
+    A `margem` NAO tem default defensavel fora do pre-registro: ela e' a maior diferenca que
+    o estudo aceita chamar de "mesma coisa", e sai selada. O valor aqui e' de conveniencia de
+    teste, e o laudo devolve a margem para que ela seja impressa junto da palavra
+    "coincidem", sempre.
+    """
+    a = np.array([bool(x) for x in a_correct], dtype=float)
+    b = np.array([bool(x) for x in b_correct], dtype=float)
+    if len(a) != len(b) or len(a) == 0:
+        raise ValueError("os dois bracos precisam ser pareados e nao-vazios")
+    d = a - b
+    n = len(d)
+    rng = np.random.default_rng(seed)
+    boot = d[rng.integers(0, n, size=(n_boot, n))].mean(axis=1)
+    lo, hi = float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))
+    dentro = bool(lo >= -margem and hi <= margem)
+    return {
+        "n": n, "acc_a": float(a.mean()), "acc_b": float(b.mean()),
+        "diferenca_a_menos_b": float(d.mean()),
+        "ci95_bootstrap": [lo, hi],
+        "margem": margem,
+        "gate_coincidencia": dentro,
+        # Quando o gate reprova, a leitura correta quase nunca e' "divergem": e' "nao
+        # demonstramos coincidencia dentro desta margem". A distincao vai no laudo para nao
+        # depender de quem escreve o texto depois.
+        "veredito": ("COINCIDEM_DENTRO_DA_MARGEM" if dentro else
+                     "DIVERGEM" if (lo > margem or hi < -margem) else
+                     "NAO_DEMONSTRADO"),
     }
 
 
