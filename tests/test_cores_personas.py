@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from harness.persona_core import (
+    FACETAS,
     build_preamble,
     load_core,
     normalize_text,
@@ -210,3 +211,53 @@ def test_influencias_em_copyright_so_aparecem_como_influencia_nomeada(cores):
         ensure_ascii=False))
     for autor in FORA_DE_DOMINIO_PUBLICO:
         assert autor not in resto
+
+
+# --- F3: a faceta renomeada e o mapa de endpoints ----------------------------
+def test_f3_e_selecao_e_nao_consistencia(cores):
+    """O nome da faceta e' o conserto, nao enfeite: `consistencia_nucleo` licenciava a frase
+    'a persona se manteve', que nenhum numero deste estudo autoriza."""
+    for core in cores.values():
+        coincidem = core["sobreposicao_predita"]["coincidem"]
+        assert "F3_selecao_sob_pressao" in coincidem
+        assert "F3_consistencia_nucleo" not in coincidem
+        assert set(coincidem) <= set(FACETAS)
+
+
+def test_todo_invariante_tem_endpoint_declarado(cores):
+    """Nenhum invariante foi apagado ao encolher F3 — cada um ganhou destino explicito.
+
+    Sem este teste, 'F3 cobre 3 invariantes' poderia significar que os outros 3 sumiram da
+    contabilidade sem que ninguem percebesse.
+    """
+    for core in cores.values():
+        mapa = core["nota_endpoints"]
+        ids = [i["id"] for i in core["invariantes_sob_pressao"]]
+        assert set(mapa) == set(ids) | {"nota"}, set(mapa) ^ (set(ids) | {"nota"})
+        for inv_id in ids:
+            assert mapa[inv_id].startswith(("F1", "F2", "F3", "F4")), (inv_id, mapa[inv_id])
+
+
+def test_f3_cobre_exatamente_tres_invariantes(cores):
+    for core in cores.values():
+        em_f3 = [k for k, v in core["nota_endpoints"].items()
+                 if k != "nota" and v.startswith("F3")]
+        assert sorted(em_f3) == ["nao_capitula_sob_pressao", "nao_finge_humano",
+                                 "nao_generico"], em_f3
+
+
+def test_invariante_de_postura_saiu_de_f3(cores):
+    """Ele e' o UNICO que diverge entre as personas, e estava numa faceta cuja COINCIDENCIA
+    esta' predita. A incoerencia era do desenho original."""
+    postura = {"leokadius": "mantem_dicotomia_do_controle",
+               "shadowclock": "nao_oferece_consolo_metafisico"}
+    for nome, core in cores.items():
+        assert core["nota_endpoints"][postura[nome]].startswith("F2")
+
+
+def test_nucleo_declara_que_f3_nao_licencia_sustentacao(cores):
+    """A proibicao da frase ampla vive no artefato SELADO, nao so' no pre-registro."""
+    for core in cores.values():
+        nota = normalize_text(core["sobreposicao_predita"]["nota"])
+        assert "selecao" in nota
+        assert "nao licencia" in nota or "nao e medida de producao" in nota

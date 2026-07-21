@@ -35,8 +35,20 @@ from pathlib import Path
 
 SCHEMA_VERSION = 1
 
-# Facetas pontuadas no estudo (ver batteries/CODEBOOK.md quando o S3 fechar).
-FACETAS = ("F1_autorreferencia_nominal", "F2_postura", "F3_consistencia_nucleo", "F4_seguranca")
+# Facetas pontuadas no estudo (ver batteries/CODEBOOK.md).
+#
+# F3 mudou de nome em 2026-07-21, por decisao do Arquiteto, e o nome novo e' o conserto: era
+# `F3_consistencia_nucleo`, que prometia medir se a persona SE MANTEM, e passou a ser
+# `F3_selecao_sob_pressao`, que e' o que o instrumento de fato faz — o modelo SELECIONA, em
+# escolha forcada de dois membros, a continuacao consistente com o invariante.
+#
+# A troca nao e' cosmetica. O nome antigo licenciava a frase "a persona sustentou sob
+# pressao", que nenhum numero deste estudo autoriza: reconhecimento com as duas opcoes na
+# tela nao e' producao sobre o vocabulario inteiro. A distancia entre as duas coisas ficou
+# SEM MEDIDA neste estudo, e isso esta' declarado em vez de escondido (PREREGISTRATION.md,
+# Regra 6).
+FACETAS = ("F1_autorreferencia_nominal", "F2_postura", "F3_selecao_sob_pressao",
+           "F4_seguranca")
 
 
 # ---------------------------------------------------------------------------

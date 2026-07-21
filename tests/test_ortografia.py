@@ -67,12 +67,17 @@ _APOSTROFO_DA_ORIGEM = re.compile(
     r"\b(e|a|ha|so|ja|la|ca|ate|esta|estao|tera|sera|fe|pe|ate|alem|apos|tres)'"
     r"(?=\s|$|[.,;:!?)\]])")
 
-_PALAVRA = re.compile(r"[a-zA-Zà-üÀ-Ü]+")
+# Captura o token INTEIRO, sublinhados inclusive, para poder descartar identificadores. Um
+# nucleo cita `nao_generico` e `nao_capitula_sob_pressao` no proprio texto de exibicao — sao
+# nomes de campo, nao portugues, e cobrar acento deles seria o mesmo erro que cobrar dos
+# marcadores `viola_se`. Sem esta distincao o verificador acusaria a nota que EXPLICA a
+# distincao, que e' o tipo de falso positivo que faz um teste ser desligado.
+_TOKEN = re.compile(r"[\w'à-üÀ-Ü]+")
 
 
 def _suspeitas(texto: str) -> list[str]:
-    achadas = [m.group(0).lower() for m in _PALAVRA.finditer(texto)
-               if m.group(0).lower() in SEM_ACENTO]
+    achadas = [m.group(0).lower() for m in _TOKEN.finditer(texto)
+               if "_" not in m.group(0) and m.group(0).lower() in SEM_ACENTO]
     achadas += [f"{m.group(1)}' (apostrofo da origem)"
                 for m in _APOSTROFO_DA_ORIGEM.finditer(texto)]
     return achadas
