@@ -12,8 +12,18 @@ decisão registrada.
 
 | Persona | Arquivo | `core_hash` | Data do selo | Quem selou |
 |---|---|---|---|---|
-| Leokadius | `leokadius.core.json` | *(não selado)* | — | — |
-| Shadowclock | `shadowclock.core.json` | *(não selado)* | — | — |
+| Leokadius | `leokadius.core.json` | `67d4819533f2e3609dcf5766fe1e7677ed2a6ce84ebc1cc5603b1a63135c7202` | 2026-07-21 | Arquiteto |
+| Shadowclock | `shadowclock.core.json` | `ae6d8f57ed57021532f9cd43649768753bb75733f597838aaeaabfb6a6c99c65` | 2026-07-21 | Arquiteto |
+
+**SELADOS.** A partir daqui, todo artefato do estudo cita estes dois hashes, e editar qualquer
+núcleo invalida a cadeia inteira. `seal_core` já recusa re-selar em silêncio — verificado: uma
+segunda chamada levanta `ValueError` em vez de sobrescrever.
+
+Conferência feita no ato do selo: `load_core` recalcula o hash a partir do conteúdo e compara —
+os dois batem. A suíte passou de **244 passed / 9 skipped** para **246 passed / 7 skipped**: os
+dois testes que estavam pulados por falta de selo agora **verificam o selo a cada execução**.
+Os 7 que restam são os goldens legados, que só rodam com `IPS_LEGACY_DIR` apontando para o
+repositório predecessor.
 
 ## Como selar
 
