@@ -14,6 +14,7 @@ Cada arquivo em `sources/` guarda no front-matter o `sha256` do download origina
 |---|---|---|---|---|---|
 | Thoughts of Marcus Aurelius Antoninus | Marco Aurélio | George Long | 1862 | 15877 | 421 KB |
 | A Selection from the Discourses of Epictetus with the Encheiridion | Epicteto | George Long | 1877 | 10661 | 323 KB |
+| Minor Dialogues, com o Diálogo sobre a Clemência | Sêneca | Aubrey Stewart | 1889 | 64576 | 818 KB |
 | The Lives and Opinions of Eminent Philosophers | Diógenes Laércio | Charles Duke Yonge | 1853 | 57342 | 1.095 KB |
 
 Diógenes Laércio entra **apenas pelo Livro VII** (Zenão e os estoicos): o handoff admite
@@ -21,8 +22,12 @@ Zenão só por essa via, e o restante da obra cobre escolas que não são desta 
 recorte é feito no construtor de corpus, não no download, para que o arquivo baixado
 continue idêntico à fonte.
 
-**Sêneca**: pendente de decisão. A tradução aprovada (Gummere) não existe no Project
-Gutenberg — está no Wikisource, edição Loeb 1917–25.
+**Sêneca — substituição aprovada.** A tradução da lista original (Gummere, *Moral Letters*)
+não existe no Project Gutenberg; está no Wikisource, edição Loeb 1917–25. O Arquiteto
+aprovou em 2026-07-21 a substituição por **Aubrey Stewart** (*Minor Dialogues*, 1889), que
+tem tradutor registrado, verificável no próprio texto, e traz *De Tranquillitate Animi* e
+*De Ira* — respectivamente a fonte do movimento `prosoche`, que sem ela fechava em 11 de 46,
+e o tema "ira" previsto para a bateria de Leokadius.
 
 ## Shadowclock — existencialista ateu
 
