@@ -1,0 +1,40 @@
+MIT License
+
+Copyright (c) 2026 Geovani Henrique Santos de Souza
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+SCOPE NOTE
+
+The MIT license above covers the *code* in this repository (harness, judge,
+analysis and build scripts).
+
+It does NOT cover:
+
+  * Text corpora under `corpora/`. Those are assembled from works in the public
+    domain and from original text written for this study. Per-item attribution
+    (`source`, `artist`, `passage`) is recorded in the corpus files themselves;
+    reuse of public-domain material carries no restriction, but the attribution
+    should travel with it.
+
+  * Base model weights. None are redistributed here. Only trained adapters and
+    their configs are published, and those remain subject to the license of the
+    base model they adapt.

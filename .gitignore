@@ -1,0 +1,35 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- environments ---
+.venv/
+venv/
+env/
+
+# --- model weights (never redistributed here) ---
+# Trained adapters ARE tracked (~26 MB each); base weights are not.
+models/
+*.gguf
+*.bin
+*.pt
+*.pth
+*.safetensors
+!**/adapter_model.safetensors
+
+# --- caches ---
+.cache/
+hf_cache/
+*.lock
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# NOTE: runs/ is deliberately NOT ignored. Raw generations are evidence (W4)
+# and are committed with their provenance seal.
