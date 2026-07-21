@@ -47,6 +47,17 @@ FONTES = [
          exige_tradutor=True,
          url="https://www.gutenberg.org/files/10661/10661-0.txt",
          movimentos_esperados=["dicotomia_do_controle", "prosoche", "metodo_socratico", "apatheia"]),
+    # Seneca: a traducao aprovada (Gummere, Moral Letters) nao existe no catalogo — esta'
+    # no Wikisource, edicao Loeb. Aprovada a substituicao por Aubrey Stewart (2026-07-21),
+    # que traz De Tranquillitate Animi e De Ira: exatamente o material de atencao ao
+    # presente que faltava ao lado estoico.
+    dict(persona="leokadius", slug="seneca_dialogos_menores", gid=64576,
+         obra="Minor Dialogues, Together With the Dialogue on Clemency",
+         autor="Lucius Annaeus Seneca", tradutor="Aubrey Stewart", ano_traducao=1889,
+         lingua="en", exige_tradutor=True,
+         url="https://www.gutenberg.org/files/64576/64576-0.txt",
+         movimentos_esperados=["prosoche", "apatheia", "dicotomia_do_controle", "memento_mori"],
+         nota="Substitui a traducao de Gummere, ausente do catalogo; desvio aprovado pelo Arquiteto."),
     dict(persona="leokadius", slug="diogenes_laercio_vidas", gid=57342,
          obra="The Lives and Opinions of Eminent Philosophers", autor="Diogenes Laertius",
          tradutor="Charles Duke Yonge", ano_traducao=1853, lingua="en",

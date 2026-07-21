@@ -45,10 +45,16 @@ CHAVES: dict[str, tuple[str, ...]] = {
                               "things which are not", "not in thy power", "choice"),
     "memento_mori": ("death", "die", "dying", "mortal", "perish", "brief", "short life",
                      "transient", "grave", "tomb", "fleeting"),
-    "apatheia": ("passion", "anger", "grief", "disturb", "tranquil", "unmoved", "desire",
+    # apatheia e prosoche disputavam o mesmo vocabulario: "tranquil" aparece tanto na
+    # discussao das paixoes quanto no tratado sobre a atencao (De Tranquillitate Animi), e
+    # o argmax mandava tudo para apatheia. As listas foram desambiguadas — apatheia fica
+    # com o dominio das PAIXOES, prosoche com o da ATENCAO E OCUPACAO.
+    "apatheia": ("passion", "anger", "grief", "disturb", "unmoved", "desire",
                  "aversion", "perturb", "serenity", "indifferent things"),
     "prosoche": ("attention", "attend", "present moment", "vigilance", "watch over",
-                 "the present", "here and now", "mindful", "guard thy"),
+                 "the present", "here and now", "mindful", "guard thy", "peace of mind",
+                 "tranquillity of mind", "tranquil", "distract", "wander", "occupied",
+                 "busied", "engaged in", "employment", "steadiness"),
     "metodo_socratico": ("socrates", "question", "questioning", "dialectic", "inquiry",
                          "refute", "examine", "answer me", "asked him"),
     # Shadowclock — existencialista ateu
@@ -79,6 +85,7 @@ RECORTES: dict[str, tuple[str | None, str | None]] = {
     # Leokadius
     "diogenes_laercio_vidas": (r"BOOK\s+VII\b", r"BOOK\s+VIII\b"),          # so' Zenao/estoicos
     "marco_aurelio_pensamentos": (r"(?m)^THE THOUGHTS\s*$", r"(?m)^INDEX OF TERMS"),
+    "seneca_dialogos_menores": (r"WHEN A PROVIDENCE EXISTS", r"(?m)^INDEX\.\s*$"),
     # Shadowclock
     "nietzsche_zaratustra": (None, r"(?m)^APPENDIX\."),                     # apendice = notas do tradutor
     "nietzsche_gaia_ciencia": (r"PREFACE TO THE SECOND", r"(?m)^\s*APPENDIX\s*$"),
@@ -231,22 +238,37 @@ def equilibra(itens: list[dict], por_movimento: int, teto_por_obra: float) -> li
     para ser deterministico. O teto por obra existe porque uma unica obra dominando o
     corpus faria a persona aprender aquele autor, e nao o movimento.
     """
-    total_alvo = por_movimento * len({i["movimento"] for i in itens})
-    max_por_obra = int(total_alvo * teto_por_obra)
-    escolhidos: list[dict] = []
-    usados_por_obra: Counter = Counter()
-    for mov in sorted({i["movimento"] for i in itens}):
-        candidatos = sorted((i for i in itens if i["movimento"] == mov),
-                            key=lambda i: (-i["forca_movimento"], i["locator"], i["passage"][:40]))
-        n = 0
-        for item in candidatos:
-            if n >= por_movimento:
-                break
-            if usados_por_obra[item["locator"]] >= max_por_obra:
-                continue
-            escolhidos.append(item)
-            usados_por_obra[item["locator"]] += 1
-            n += 1
+    movimentos = sorted({i["movimento"] for i in itens})
+
+    def seleciona(max_por_obra: int) -> list[dict]:
+        escolhidos: list[dict] = []
+        usados: Counter = Counter()
+        for mov in movimentos:
+            candidatos = sorted((i for i in itens if i["movimento"] == mov),
+                                key=lambda i: (-i["forca_movimento"], i["locator"],
+                                               i["passage"][:40]))
+            n = 0
+            for item in candidatos:
+                if n >= por_movimento:
+                    break
+                if usados[item["locator"]] >= max_por_obra:
+                    continue
+                escolhidos.append(item)
+                usados[item["locator"]] += 1
+                n += 1
+        return escolhidos
+
+    # O teto por obra vale sobre o corpus REALIZADO, nao sobre a meta: quando um movimento
+    # nao atinge a meta, o total encolhe e uma obra que cabia na meta passa a exceder o
+    # teto no corpus que de fato existe. Ponto fixo em poucas rodadas (o total so' cai).
+    total = por_movimento * len(movimentos)
+    escolhidos = seleciona(int(total * teto_por_obra))
+    for _ in range(5):
+        realizado = len(escolhidos)
+        novos = seleciona(int(realizado * teto_por_obra))
+        if len(novos) == realizado:
+            return novos
+        escolhidos = novos
     return escolhidos
 
 
@@ -255,8 +277,10 @@ def main(argv=None) -> int:
     ap.add_argument("--core", required=True, help="nucleo da persona (define os movimentos)")
     ap.add_argument("--sources", default=None, help="diretorio das fontes")
     ap.add_argument("--out", default=None, help="jsonl de saida")
-    ap.add_argument("--por-movimento", type=int, default=46,
-                    help="passagens por movimento (5 x 46 = 230, na escala do piloto)")
+    ap.add_argument("--por-movimento", type=int, default=40,
+                    help="passagens por movimento. 40 e' o valor em uso: e' o maior numero "
+                         "que os DOIS lados alcancam em TODOS os movimentos, o que torna os "
+                         "corpora balanceados por construcao em vez de por sorte")
     ap.add_argument("--teto-por-obra", type=float, default=0.30,
                     help="fracao maxima do corpus vinda de uma unica obra")
     args = ap.parse_args(argv)
@@ -265,7 +289,13 @@ def main(argv=None) -> int:
     persona = core["persona_id"]
     movimentos = core["movimentos"]
     src = Path(args.sources) if args.sources else config.CORPORA_DIR / "sources" / persona
-    out = Path(args.out) if args.out else config.CORPORA_DIR / f"distill_{persona}.jsonl"
+    # UM corpus por persona. O plano herdou do projeto de origem a divisao em dois corpora
+    # (destilacao e conviccoes), que la' existia porque as duas fontes eram diferentes —
+    # cancoes para a voz, filosofia para a postura. Aqui as duas viriam das MESMAS
+    # passagens com dois eixos de rotulo, e o desenho treina UM adapter por braco
+    # (persona x scrub), nao dois. Dois arquivos com o mesmo conteudo dobrariam a
+    # contabilidade de paridade sem acrescentar controle.
+    out = Path(args.out) if args.out else config.CORPORA_DIR / f"corpus_{persona}.jsonl"
 
     arquivos = sorted(src.glob("*.md"))
     if not arquivos:
