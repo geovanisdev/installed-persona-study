@@ -221,3 +221,93 @@ def inversao_categorica(off_acc: float, on_acc: float, *,
     do run.
     """
     return off_acc >= piso_off and on_acc <= teto_on
+
+
+# --- F3: transicoes de ESTADO, e nao acertos ---------------------------------
+# Acrescentado em 2026-07-21, depois de o endpoint anterior ser medido e reprovado.
+#
+# O PROBLEMA. F3 lia acerto por criterio E: escolher o texto consistente NAS DUAS ORDENS. O
+# endpoint era McNemar sobre esses acertos, adapter contra base. Parece pareado e simetrico.
+# Nao e'.
+#
+# Cada item, em cada braco, esta' em um de tres estados:
+#
+#     CONS   escolheu o mesmo TEXTO (o consistente) nas duas ordens   ('1','2')
+#     VIOL   escolheu o mesmo TEXTO (o violador) nas duas ordens      ('2','1')
+#     POS    escolheu o mesmo ROTULO nas duas ordens, ou nao escolheu ('1','1'), ('2','2'), None
+#
+# Num item em que a BASE esta' em POS, o criterio E ja' falha, logo `c` (o adapter perde um
+# item que a base tinha) e' IMPOSSIVEL por construcao — so' `b` pode ocorrer. Medido no V0:
+# 5 de 16 itens, 31%, estavam nesse estado.
+#
+# Consequencia: um adapter que apenas ficou mais DECIDIDO quanto ao formato — sem construto
+# nenhum — converte esses itens, e ao acaso metade cai no lado consistente. Resultado b ~ R/2,
+# c = 0, e McNemar acende. Mais itens PIORAM: a taxa de falso positivo cresce com n.
+#
+# A CORRECAO. Contar TRANSICOES DE DIRECAO, nao acertos:
+#
+#     PRO    = itens que o adapter levou A CONS e a base nao tinha em CONS
+#     CONTRA = itens que o adapter levou A VIOL e a base nao tinha em VIOL
+#
+# Sob decisividade de formato pura, as conversoes de POS caem 50/50 entre CONS e VIOL: PRO ~
+# CONTRA e o teste nao rejeita. Sob construto, PRO >> CONTRA. O teste passa a ser binomial
+# exato de PRO contra PRO+CONTRA sob 1/2 — que e' exatamente a pergunta "a mudanca teve
+# DIRECAO?", e nao "houve mudanca?".
+#
+# T2 (o McNemar de sempre) e' MANTIDO em conjuncao, porque T1 sozinho nao penaliza o adapter
+# que PERDE itens que a base tinha (CONS -> POS). Custa pouco poder e fecha o flanco.
+
+
+def estado_do_par(escolhas) -> str:
+    """CONS / VIOL / POS a partir do par de rotulos emitidos nas duas ordens.
+
+    `apresenta` poe a consistente como rotulo "1" na ordem 0 e como "2" na ordem 1. Logo
+    ('1','2') e' o mesmo TEXTO escolhido duas vezes — o consistente — e ('2','1') e' o
+    violador escolhido duas vezes. Os demais casos sao aderencia ao ROTULO, nao ao texto.
+    """
+    a, b = (escolhas[0], escolhas[1]) if len(escolhas) == 2 else (None, None)
+    if a is None or b is None:
+        return "POS"
+    if (a, b) == ("1", "2"):
+        return "CONS"
+    if (a, b) == ("2", "1"):
+        return "VIOL"
+    return "POS"
+
+
+def _sf_binom(k: int, n: int, p: float = 0.5) -> float:
+    """P(K >= k) exata. Sem scipy, pelo mesmo motivo do resto do modulo."""
+    return sum(math.comb(n, i) * p**i * (1 - p) ** (n - i) for i in range(k, n + 1))
+
+
+def gate_transicoes(estados_adapter: list[str], estados_base: list[str], *,
+                    alpha: float = 0.05) -> dict:
+    """Gate de F3: a mudanca do adapter em relacao a' base teve DIRECAO consistente?
+
+    Pareado por item. Devolve os dois testes e a conjuncao; nenhum deles sozinho e' o gate.
+    """
+    if len(estados_adapter) != len(estados_base) or not estados_adapter:
+        raise ValueError("estados precisam ser pareados e nao-vazios")
+
+    pro = contra = b = c = 0
+    for sa, sb in zip(estados_adapter, estados_base):
+        if sa == "CONS" and sb != "CONS":
+            pro += 1
+        if sa == "VIOL" and sb != "VIOL":
+            contra += 1
+        if sa == "CONS" and sb != "CONS":
+            b += 1
+        elif sa != "CONS" and sb == "CONS":
+            c += 1
+
+    p_t1 = _sf_binom(pro, pro + contra) if (pro + contra) else 1.0
+    p_t2 = _sf_binom(b, b + c) if (b + c) else 1.0
+    return {
+        "n": len(estados_adapter),
+        "pro": pro, "contra": contra, "b": b, "c": c,
+        "p_direcao": p_t1, "p_mcnemar": p_t2,
+        "alpha": alpha,
+        "t1_direcao": bool(p_t1 <= alpha),
+        "t2_nao_perdeu": bool(p_t2 <= alpha),
+        "gate": bool(p_t1 <= alpha and p_t2 <= alpha),
+    }

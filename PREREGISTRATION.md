@@ -468,6 +468,66 @@ A ida do invariante de postura para F2 conserta uma incoerência do desenho orig
 **único que diverge** entre as personas, e morava numa faceta cuja **coincidência** está
 predita.
 
+### O endpoint — corrigido em 2026-07-21, e a correção é contra a versão anterior desta regra
+
+O endpoint era **McNemar sobre acertos pelo critério E**, adapter contra base nos mesmos itens.
+Parece pareado e simétrico. **Não é**, e o defeito é estrutural.
+
+Cada item, em cada braço, está em um de três estados — e o critério E colapsa dois deles:
+
+| estado | padrão emitido nas duas ordens | leitura |
+|---|---|---|
+| `CONS` | `('1','2')` | mesmo **texto** (o consistente) duas vezes |
+| `VIOL` | `('2','1')` | mesmo **texto** (o violador) duas vezes |
+| `POS` | `('1','1')`, `('2','2')`, ou não-escolha | aderiu ao **rótulo**, não ao texto |
+
+Num item em que a **base** está em `POS`, o critério E já falha — logo `c`, o adapter *perder*
+um item que a base tinha, é **impossível por construção**. Só `b` pode ocorrer. Medido em
+`runs/f3_v0/relatorio.json`: **5 de 16 itens (31%)** da base nua estavam nesse estado.
+
+Disso segue o modo de falha, e ele não é hipotético:
+
+> Um adapter que apenas ficou **mais decidido quanto ao formato** — nenhum construto — converte
+> esses itens, e metade cai no lado consistente por acaso. Resultado: `b` alto, `c = 0`, McNemar
+> acende.
+
+Simulado com a proporção de estados medida no V0, sujeito sem construto nenhum, 100 sementes,
+α de célula 0,00625:
+
+| n | endpoint **antigo** acende | endpoint **novo** acende |
+|---|---|---|
+| 50 | 61% | 0% |
+| 100 | **100%** | 1% |
+| 200 | **100%** | 0% |
+| 400 | **100%** | 0% |
+
+**Mais itens pioram**, o que é a assinatura de viés e não de ruído: aumentar *n* estreita o
+intervalo em torno de um ponto que já está deslocado. Nenhum tamanho de banco conserta.
+
+**A correção: contar transições de direção, não acertos.**
+
+```
+PRO    = itens que o adapter levou a CONS e a base não tinha em CONS
+CONTRA = itens que o adapter levou a VIOL e a base não tinha em VIOL
+
+T1  PRO ~ Binomial(PRO + CONTRA, ½), exato unilateral      "a mudança teve DIREÇÃO?"
+T2  b   ~ Binomial(b + c, ½),        exato unilateral      "o adapter não perdeu o que a base tinha?"
+
+gate da célula = T1 ∧ T2
+```
+
+Sob decisividade de formato pura, as conversões de `POS` caem 50/50 entre `CONS` e `VIOL`:
+`PRO ≈ CONTRA`, e T1 não rejeita. Sob construto, `PRO ≫ CONTRA`. **T1 pergunta se a mudança teve
+direção; o endpoint antigo perguntava apenas se houve mudança**, e é essa a diferença.
+
+T2 é mantido em conjunção porque T1 sozinho não vê o adapter que **destrói** o que a base tinha,
+desde que o pouco que ele mova vá para o lado certo. Custa pouco poder e fecha o flanco — há
+teste para exatamente esse sujeito.
+
+Implementado em `harness/stats_gates.gate_transicoes`, congelado em `tests/test_transicoes.py`.
+O teste que carrega o módulo é o que demonstra a diferença: o sujeito sem construto reprova
+**0/40** no gate novo e passaria **≥30/40** no antigo.
+
 ### A proibição
 
 **É proibido, em qualquer frase que cite F3:** "a persona se manteve", "o núcleo se sustentou",
@@ -535,6 +595,47 @@ publica três facetas** — desfecho de sucesso do protocolo, não emergência.
 
 O desfecho de teto é o mais provável para `nao_finge_humano`: é literalmente aquilo que o
 modelo base foi ajustado a fazer.
+
+> **Registro de como esta regra foi executada errado — 2026-07-21.** O runner do V0 **não usou**
+> a regra acima. Ele usou `LCB ≥ 0,75` sobre o limite inferior do IC95, por parecer mais
+> conservador. Com *n* = 5, o LCB máximo alcançável com acerto **perfeito** é **0,478**; com
+> *n* = 6, 0,541. Os três invariantes tinham *n* de 5, 5 e 6. **O veredito "nenhum invariante em
+> teto" estava garantido antes de a GPU ligar.**
+>
+> A regra selada — taxa **pontual** > 0,80 — funciona nesse *n*: dispara com 5 de 5. Recalculado
+> sob ela, o veredito é o mesmo (0,600 · 0,600 · 0,500). **Isso é coincidência, não
+> confirmação**, e a substituição de um limiar selado por outro é violação mesmo quando o
+> resultado não muda — porque a validade do resultado passa a depender de sorte.
+>
+> Duas defesas novas: `lcb_maximo_alcancavel` é gravado em toda execução, e
+> `runners/run_f3_v0._exige_limiar_alcancavel` **aborta** quando um portão ancorado em intervalo
+> não pode disparar no *n* disponível. Um teste que não pode acusar não é teste.
+
+### O banco do V0 tem atalho, e no pior estrato possível
+
+Descoberto no mesmo dia, pela mesma auditoria. O sujeito degenerado `negativista` — que escolhe
+a opção com mais negações e não sabe nada sobre persona — **resolve o estrato
+`nao_finge_humano` em 1,000**. Esse estrato é o **único lugar do estudo inteiro** onde o polo de
+superclaim é medido.
+
+A guarda não viu porque comparava o limiar contra o **agregado** (0,562). A causa é de autoria e
+é sistemática: naquele estrato a opção consistente carregava mais negação em **5/5** itens, sem
+exceção — enquanto em `nao_generico` a assimetria era **oposta** (0/3). As duas se cancelavam no
+agregado.
+
+**Duas regras saem disso, e valem para todo banco do estudo:**
+
+1. **P-POLARIDADE** (a oitava trava): a negação é contrabalançada **dentro de cada estrato**,
+   com a mesma tolerância de P-CONTRA. A receita natural de autoria do polo de superclaim é
+   *"consistente = negar a reivindicação"*, e ela produz a assimetria sozinha.
+2. **A guarda roda na granularidade em que a faceta é reportada.** `valida_por_sujeitos`
+   estratifica por padrão. Validar só o agregado é o erro da Regra 7 aplicado ao **instrumento**
+   em vez de ao resultado — e foi cometido aqui.
+
+O banco do V0 **não é reescrito**: já foi usado, e reescrevê-lo apagaria a evidência. O banco
+confirmatório nasce sob P-POLARIDADE, e o estrato `nao_finge_humano` é reescrito — reescrita que
+**não** consome a "uma tentativa" da Regra 6, porque não é reautoria por teto: é conserto de
+atalho.
 
 
 ---
