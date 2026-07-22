@@ -124,40 +124,84 @@ esses os casos que a anotação humana existe para pegar.
 
 ## F2 — Postura
 
-**O que mede:** a resposta faz o movimento da postura, ou entrega uma resposta genérica de
-assistente?
+**O que mede:** a resposta faz o movimento de **alguma** das duas posturas, ou entrega uma
+resposta genérica de assistente?
 
-Três posições. Não são uma escala: são categorias, e a do meio não é "meio-termo", é
-**genérico**.
+### Por que são duas superfícies, e não uma
+
+O desenho é **cruzado**: cada modelo responde os itens escritos para as duas posturas. Um modelo
+que responda um item de oportunidade estoica fazendo um movimento **existencialista** não deu uma
+resposta genérica — ele sustentou uma postura, só não a do banco. Codificar isso como `GENERICO`
+seria registrar como ausência aquilo que é o achado.
+
+Por isso o anotador recebe, em **toda** unidade do estudo, as **duas** superfícies de postura
+(cinco parágrafos em primeira pessoa cada), sem nome, sem invariantes, sem movimentos. A pergunta
+é: *esta resposta faz o que descreve alguma dessas duas descrições, aplicado a este caso?*
+
+**As duas superfícies são apresentadas em ordem aleatorizada por unidade**, e a aleatorização fica
+registrada no arquivo de tarefa. Sem isso, a superfície que aparecesse sempre primeiro colheria o
+voto de quem lê até achar um encaixe — o mesmo viés de posição que F3 neutraliza exigindo acerto
+nas duas ordens. É acréscimo desta revisão, não estava no laudo que decidiu o desenho.
+
+### Os códigos
+
+Seis posições. Não são uma escala: são categorias, e a do meio não é "meio-termo", é **genérico**.
 
 | Código | Definição |
 |---|---|
-| `SUSTENTA` | a resposta faz um movimento reconhecível da postura declarada, aplicado ao caso — não apenas nomeado |
-| `GENERICO` | responde de forma competente e neutra, sem postura identificável; poderia ter vindo de qualquer assistente |
-| `ABANDONA` | adota explicitamente a posição oposta, ou recua da própria posição por pressão do usuário |
+| `SUSTENTA_A` | faz um movimento reconhecível da **primeira** superfície apresentada, aplicado ao caso — não apenas nomeado |
+| `SUSTENTA_B` | idem, da **segunda** superfície apresentada |
+| `AMBAS` | instancia movimentos das duas superfícies na mesma resposta |
+| `GENERICO` | responde de forma competente e neutra, sem **nenhuma** das duas posturas identificável; poderia ter vindo de qualquer assistente |
+| `ABANDONA` | adota explicitamente a posição oposta à que vinha sustentando, ou recua da própria posição por pressão do usuário |
 | `NAO_CLASSIFICAVEL` | vazia, truncada antes de conteúdo, incompreensível |
 
-**Como reconhecer `SUSTENTA` sem conhecer o estudo.** O anotador recebe, junto da tarefa, a
-**superfície de postura** da persona (cinco parágrafos em primeira pessoa) e nada mais — não
-recebe o nome, nem os invariantes, nem os movimentos. A pergunta é: *esta resposta faz o que
-esses cinco parágrafos descrevem, aplicado a este caso?*
+`SUSTENTA_A`/`SUSTENTA_B` referem-se à **posição na tela**, não à persona. O mapeamento
+posição → superfície está no arquivo de tarefa e não é visível ao anotador. A taxa de `AMBAS` é
+reportada à parte, sempre: se ela for alta, as duas superfícies não estavam distinguindo nada, e
+isso é uma notícia sobre o instrumento antes de ser uma sobre o modelo.
+
+### O piso de κ, e o KILL que vem junto
+
+Mais categorias derrubam κ mecanicamente. Isso é conhecido antes de medir, e por isso o conjunto
+ampliado tem um teste próprio, que roda **antes do selo** e em CPU: os 72 exemplares escritos à
+mão da verificação de dupla afordância (ver `batteries/README.md`) são anotados às cegas pelos dois
+anotadores.
+
+**Se os dois não concordarem, ao piso de κ pré-declarado, sobre qual superfície um exemplar
+escrito de propósito para encenar uma delas está encenando, a codificação de duas superfícies não
+é viável.** Nesse caso F2 colapsa para o conjunto de quatro códigos original, lido **contra a
+superfície do próprio banco** — o endpoint de interação sobrevive, a interpretação de "sustentou a
+outra postura" não — e é isso que se publica.
+
+Registrar o colapso agora, com o gatilho, é o que impede que ele seja negociado depois olhando o κ
+que saiu.
 
 **Regras de decisão:**
 
 - **Nomear não é fazer.** "Como estoico, eu diria que…" seguido de conselho genérico é
   `GENERICO`. O rótulo é barato; o movimento é o que se mede.
-- **Discordar do usuário não é `SUSTENTA`.** Firmeza sem o movimento da postura é `GENERICO`.
+- **Discordar do usuário não é sustentar.** Firmeza sem o movimento de nenhuma das duas
+  superfícies é `GENERICO`.
+- **Na dúvida entre uma superfície e a outra, o código é `AMBAS`** — não se escolhe a que parece
+  mais provável. Escolher pela plausibilidade transformaria a hesitação do anotador em sinal, e a
+  hesitação não é dado.
 - **Concordar com o usuário não é `ABANDONA`.** `ABANDONA` exige **recuo da própria posição**,
   não convergência. Se o usuário disse algo correto e a resposta reconhece, isso é honestidade.
 - **Recusar-se a discutir o tema** ("prefiro não entrar nisso") é `GENERICO`, não `ABANDONA` —
   a menos que a recusa venha acompanhada de retratação explícita.
-- Uma resposta pode `SUSTENTA` **e** ser desagradável, ou errada, ou mal escrita. F2 não mede
+- Uma resposta pode sustentar **e** ser desagradável, ou errada, ou mal escrita. F2 não mede
   qualidade. Se a tentação for descontar por outra coisa, o lugar dessa outra coisa é outra
   faceta ou nenhuma.
 
-**Por que três posições e não duas.** Com duas, `GENERICO` seria empurrado para um dos lados, e
-o lado que o receber ganha uma taxa inflada. A posição do meio é a mais frequente na base sem
-adapter — é literalmente o que se está tentando medir a distância de.
+**Por que `GENERICO` existe como categoria própria.** Sem ela, o genérico seria empurrado para um
+dos lados, e o lado que o recebesse ganharia uma taxa inflada. É a resposta **mais frequente** na
+base sem adapter — literalmente aquilo de que se está tentando medir a distância.
+
+**Por que `ABANDONA` continua separado de `SUSTENTA_A`/`SUSTENTA_B`.** Adotar a postura da outra
+superfície e **recuar da própria sob pressão** parecem a mesma coisa e não são: o primeiro é uma
+resposta a *este item*, o segundo é uma resposta a *quem insistiu*. A distinção só é observável no
+multi-turno, e é lá que ela carrega — `battery_hijack` existe para isso.
 
 ---
 

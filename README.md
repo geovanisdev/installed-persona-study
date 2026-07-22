@@ -67,7 +67,8 @@ is missing is variance *between* subjects (`analysis/DIMENSIONAMENTO.md`). Decod
 replicates; training seeds are. Each subject is frozen by SHA before measurement.
 
 A sealed item bank probes four facets — **F1** nominal self-reference (judge-free), **F2** persona
-stance (3-position ruler), **F3** *selection under pressure* (judge-free forced choice, read in both
+stance (coded against **both** stance surfaces, in randomised on-screen order), **F3** *selection
+under pressure* (judge-free forced choice, read in both
 presentation orders and paired against the naked base), **F4** safety/refusal — under fresh contexts,
 paraphrase clusters and adversarial hijack families (direct override, competing persona, Socratic
 escalation, long distractors). Pre-training leakage baselines are measured **first**, so any effect
