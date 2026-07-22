@@ -28,12 +28,22 @@ NÃO o passam.** E o único jeito de saber é construí-los e rodar.
 CUSTO ZERO DE GPU. Os sujeitos aqui são respondedores sintéticos de CPU: heurísticas de duas
 linhas que não sabem nada sobre persona. Se uma delas passa no instrumento, o instrumento
 estava medindo aquela heurística.
+
+UM SUJEITO NÃO É UMA FAMÍLIA (acrescentado em 2026-07-22). Registrar `curto` e chamá-lo de
+guarda do eixo de comprimento foi um erro de tipo: `curto` é **um membro** de uma família
+infinita, e num banco em que a consistente é sempre a mais longa ele marca 0,000 enquanto a
+regra espelhada marca 1,000. O 14º sujeito, `sup_comprimento`, fecha o eixo por forma
+fechada — é o supremo sobre a família inteira, não mais um membro dela. Ele vive em
+`SUJEITOS_DE_BANCO` porque é um funcional `f(itens)`, e não um respondedor `f(ctx, a, b)`.
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from collections import Counter
+from dataclasses import dataclass, field
+
+from harness.persona_core import normalize_text
 
 # --- Item de escolha forcada --------------------------------------------------
 
@@ -109,8 +119,39 @@ def pontua_sujeito(sujeito, itens: list[ItemEscolha]) -> dict:
 # --- Os sujeitos degenerados --------------------------------------------------
 # Nenhum sabe nada sobre persona. Todos sao heuristicas de duas linhas. Um instrumento que
 # qualquer um deles passa estava medindo a heuristica, nao o construto.
-_INTENSIFICADORES = ("apenas", "somente", "mero", "mera", "só", "no fundo",
-                     "em última análise", "nada além", "não passo de")
+# FONTE UNICA. `pairs_validator` importa DAQUI. Havia duas listas — esta, com 9 entradas
+# acentuadas casadas sobre texto cru, e a de `pairs_validator`, com 14 entradas incluindo as
+# variantes sem acento casadas por SUBCADEIA sobre texto normalizado — e elas derivaram.
+#
+# O DEFEITO QUE ISSO PRODUZIU, medido em 2026-07-22. A entrada `"so"` sem acento, casada por
+# subcadeia, aparece dentro de **isso**, **sobre**, **posso**, **sozinho**, **nosso**,
+# **pessoa**, **resposta**, **disso**. Num rascunho de 24 itens, a trava contava 13 itens como
+# "com intensificador" enquanto `lexico` reagia a 4. P-CONTRA equilibra o intensificador entre
+# os lados **dentro do conjunto que o tem**: diluir esse conjunto com ruido nao aperta a trava,
+# afrouxa. Construido o contraexemplo, P-CONTRA e P-DECLARA passavam num banco com o
+# intensificador real 24/24 do lado violador, e `lexico` o resolvia em 1,000.
+#
+# Ver `tests/test_intensificadores.py`, que carrega o contraexemplo.
+INTENSIFICADORES = ("apenas", "somente", "mero", "mera", "só", "no fundo",
+                    "em última análise", "nada além", "não passo de", "afinal")
+
+# Casamento por PALAVRA sobre texto NORMALIZADO. Normalizado porque escrever "so" sem acento
+# nao pode ser rota de fuga: o repo tem doutrina registrada de que portugues sem acentuacao e'
+# vicio herdado que vaza para dentro do material. Por palavra porque `so` dentro de `isso` nao
+# e' intensificador nenhum.
+_PADRAO_INTENSIFICADOR = re.compile(
+    r"(?<![\wà-üÀ-Ü])(?:" +
+    "|".join(re.escape(normalize_text(t)) for t in INTENSIFICADORES) +
+    r")(?![\wà-üÀ-Ü])")
+
+
+def tem_intensificador(texto: str) -> bool:
+    """Ha' intensificador de reducao neste texto? Fonte unica da trava e do atacante."""
+    return bool(_PADRAO_INTENSIFICADOR.search(normalize_text(texto)))
+
+
+# Compatibilidade com quem importava o nome privado.
+_INTENSIFICADORES = INTENSIFICADORES
 
 
 def mudo(ctx, a, b):                 # colapso em fim-de-turno
@@ -156,8 +197,7 @@ def lexico(ctx, a, b):
     Se o banco puser o intensificador sempre na violadora, esta heurística tira 1,000 — e o
     instrumento inteiro estaria medindo a presença de um advérbio.
     """
-    tem_a = any(t in a.lower() for t in _INTENSIFICADORES)
-    tem_b = any(t in b.lower() for t in _INTENSIFICADORES)
+    tem_a, tem_b = tem_intensificador(a), tem_intensificador(b)
     if tem_a and not tem_b:
         return "2"
     if tem_b and not tem_a:
@@ -191,6 +231,72 @@ SUJEITOS_DEGENERADOS = {
     "negativista": negativista,
 }
 
+
+# --- O 14o sujeito: um SUPREMO sobre familia, e nao um respondedor ------------
+def sup_comprimento(itens: list[ItemEscolha]) -> float:
+    """Teto exato de acerto de TODA regra que le so' o comprimento das duas opcoes.
+
+    POR QUE ELE EXISTE, e por que `curto` nao bastava
+    -------------------------------------------------
+    `curto` e' UM membro arbitrario de uma familia infinita — o que escolhe a mais curta.
+    Registrar um membro e chamar de guarda da familia foi o defeito medido em 2026-07-21:
+    num banco em que a opcao consistente e' SEMPRE a mais longa, `curto` marca **0,000** e o
+    laudo fica verde, enquanto a regra espelhada ("escolha a mais longa") marca **1,000**.
+    O guarda apontava para o lado errado do mesmo eixo.
+
+    A DERIVACAO (e' ela que torna o supremo computavel em O(n), sem varrer limiar)
+    ------------------------------------------------------------------------------
+    Sob o criterio E, uma regra desta familia le a diferenca `d = len(a) - len(b)` das duas
+    opcoes como apresentadas e devolve um rotulo: `g(d) in {"1","2"}`. Com `d_c =
+    len(consistente) - len(violadora)`, a ordem 0 apresenta `d = +d_c` e exige `"1"`; a ordem
+    1 apresenta `d = -d_c` e exige `"2"`. Logo a regra acerta o item **sse** `g(+d_c) = "1"`
+    **e** `g(-d_c) = "2"`.
+
+    Duas consequencias, e as duas sao exatas:
+
+    1. Para cada magnitude `m > 0`, `g` so' pode acertar os itens com `d_c = +m` **ou** os
+       com `d_c = -m`, nunca os dois — as duas exigencias sobre `g(+m)` se contradizem.
+    2. Itens com `d_c = 0` sao **inganhaveis por qualquer regra da familia**: exigiriam
+       `g(0) = "1"` e `g(0) = "2"` ao mesmo tempo. **O empate exato e' o otimo, nao o
+       defeito** — e essa e' a inversao que este modulo teve de fazer.
+
+    Logo o supremo sobre a familia inteira tem forma fechada:
+
+        sup = (1/n) * SOMA_{m>0} max( #{d_c = +m}, #{d_c = -m} )
+
+    NATUREZA, e ela decide onde ele entra
+    -------------------------------------
+    Isto nao e' `f(ctx, a, b)`: nenhum sujeito realiza este maximo, ele e' um TETO sobre uma
+    familia. Por isso mora em `SUJEITOS_DE_BANCO` e nao em `SUJEITOS_DEGENERADOS` — misturar
+    as duas aridades no mesmo dicionario faria `pontua_sujeito` receber um funcional e falhar
+    longe da causa. E por isso ele **entra em `solventes`** (a claim que se quer poder fazer e'
+    *nenhuma regra desta familia resolve o banco*) e **fica FORA de `nulo_empirico`**: cobrar
+    do sujeito real que supere um supremo sobreajustado subiria o piso para 0,49-0,67 por
+    artefato, uma barra que nenhum atalho existente alcanca.
+
+    LIMITE DECLARADO: ele SOBREAJUSTA quando ha' muitas classes de magnitude distintas — no
+    piloto V0 marca **1,000 nos tres estratos** (n = 5, 5 e 6, com todos os `|d_c|`
+    distintos) e 0,875 no agregado. So' e' informativo sob um teto de magnitude:
+    `equalizador.TAU_CHAR` limita a familia a tau+1 classes, e e' isso que torna o canal
+    auditavel. Estrato pequeno pode acusar sem atalho real — falso aborto, direcao segura, e
+    o conserto e' mais itens ou mais empates, nunca limiar mais frouxo.
+    """
+    n = len(itens)
+    if not n:
+        return 0.0
+    por_delta = Counter(len(it.op_consistente) - len(it.op_violadora) for it in itens)
+    magnitudes = {abs(d) for d in por_delta if d != 0}
+    ganhaveis = sum(max(por_delta.get(m, 0), por_delta.get(-m, 0)) for m in magnitudes)
+    return ganhaveis / n
+
+
+# Sujeitos de BANCO: funcionais `f(itens) -> taxa`, nao respondedores `f(ctx, a, b)`. Sao
+# julgados por `LIMIAR_BANCO_SOLUVEL` como os outros, e excluidos do piso empirico como
+# nenhum outro — ver o docstring de `sup_comprimento`.
+SUJEITOS_DE_BANCO = {
+    "sup_comprimento": sup_comprimento,
+}
+
 # DOIS NULOS, e confundi-los foi um erro meu que este modulo agora impede.
 #
 # NULO_ACASO (0,25) e' o de quem SORTEIA: acertar as duas ordens por acaso e' 1/2 x 1/2.
@@ -213,6 +319,8 @@ LIMIAR_BANCO_SOLUVEL = 0.90
 
 @dataclass(frozen=True)
 class LaudoSujeitos:
+    # RESPONDEDORES `f(ctx, a, b)`, e so' eles. `nulo_empirico` e' o maximo DESTE dicionario,
+    # por construcao e nao por sorte do banco: ver `taxas_de_banco`.
     taxas: dict[str, float]
     nulo_empirico: float           # o melhor degenerado: o piso real a ser batido
     melhor_degenerado: str
@@ -220,6 +328,11 @@ class LaudoSujeitos:
     # Por ESTRATO — vazio quando o laudo foi pedido sem estratificação.
     por_estrato: tuple[tuple[str, str, float], ...] = ()   # (estrato, degenerado, taxa)
     estratos_solveis: tuple[str, ...] = ()
+    # Sujeitos de BANCO (funcionais `f(itens)`, como `sup_comprimento`). Ficam num campo
+    # PROPRIO porque a natureza e' outra e a consequencia tambem: entram em `solventes` e
+    # em `estratos_solveis`, e NUNCA em `nulo_empirico` nem em `melhor_degenerado`.
+    taxas_de_banco: dict[str, float] = field(default_factory=dict)
+    por_estrato_banco: tuple[tuple[str, str, float], ...] = ()  # (estrato, sujeito, taxa)
 
     @property
     def banco_utilizavel(self) -> bool:
@@ -250,11 +363,27 @@ class LaudoSujeitos:
         for nome, taxa in sorted(self.taxas.items(), key=lambda kv: -kv[1]):
             marca = "  <-- RESOLVE O BANCO" if nome in self.solventes else ""
             linhas.append(f"  {nome:18s} {taxa:.3f}{marca}")
+        if self.taxas_de_banco:
+            # A EXCLUSAO fica ESCRITA no laudo, e nao so' no codigo. Se ela virasse
+            # esquecimento silencioso, o proximo leitor somaria o supremo ao piso e cobraria
+            # do sujeito real uma barra que nenhum atalho existente alcanca.
+            linhas.append("  sujeitos de BANCO (supremo sobre familia de regras) — julgados "
+                          f"por LIMIAR_BANCO_SOLUVEL {LIMIAR_BANCO_SOLUVEL:.2f} e EXCLUIDOS "
+                          "do nulo empirico:")
+            for nome, taxa in sorted(self.taxas_de_banco.items(), key=lambda kv: -kv[1]):
+                marca = "  <-- RESOLVE O BANCO" if nome in self.solventes else ""
+                linhas.append(f"    {nome:24s} {taxa:.3f}{marca}")
         if self.por_estrato:
             linhas.append("  por estrato (a granularidade em que a faceta e' REPORTADA):")
+            banco_por_estrato: dict[str, list[tuple[str, float]]] = {}
+            for estrato, nome, taxa in self.por_estrato_banco:
+                banco_por_estrato.setdefault(estrato, []).append((nome, taxa))
             for estrato, deg, taxa in self.por_estrato:
                 marca = "  <-- RESOLVE O ESTRATO" if estrato in self.estratos_solveis else ""
                 linhas.append(f"    {estrato:26s} melhor={deg:12s} {taxa:.3f}{marca}")
+                for nome, t in banco_por_estrato.get(estrato, []):
+                    alerta = "  <-- FAMILIA RESOLVE" if t >= LIMIAR_BANCO_SOLUVEL else ""
+                    linhas.append(f"      {nome:24s} {t:.3f}{alerta}")
         linhas.append("  banco -> " + ("UTILIZAVEL" if self.banco_utilizavel else "COM ATALHO"))
         return "\n".join(linhas)
 
@@ -282,12 +411,21 @@ def valida_por_sujeitos(itens: list[ItemEscolha], *,
     aplicado desta vez ao instrumento em vez de ao resultado.
 
     `estratificar_por=None` devolve o laudo antigo, só para bancos que de fato não têm estrato.
+
+    O 14º SUJEITO, e por que ele não muda o piso. `sup_comprimento` roda aqui junto com os
+    13 respondedores, entra em `solventes`/`estratos_solveis` como qualquer um deles, e fica
+    **fora** de `nulo_empirico`. Ele não é um respondedor: é o teto exato de acerto de toda a
+    família de regras que leem só comprimento. Somá-lo ao piso cobraria do sujeito real uma
+    barra produzida por sobreajuste do supremo — ver o docstring de `sup_comprimento`.
     """
     taxas = {nome: pontua_sujeito(s, itens)["taxa"] for nome, s in SUJEITOS_DEGENERADOS.items()}
     melhor = max(taxas, key=lambda n: taxas[n])
-    solventes = tuple(n for n, t in taxas.items() if t >= LIMIAR_BANCO_SOLUVEL)
+    taxas_de_banco = {nome: fn(itens) for nome, fn in SUJEITOS_DE_BANCO.items()}
+    solventes = tuple(n for n, t in (*taxas.items(), *taxas_de_banco.items())
+                      if t >= LIMIAR_BANCO_SOLUVEL)
 
     por_estrato: list[tuple[str, str, float]] = []
+    por_estrato_banco: list[tuple[str, str, float]] = []
     solveis: list[str] = []
     if estratificar_por:
         grupos: dict[str, list[ItemEscolha]] = {}
@@ -300,9 +438,15 @@ def valida_por_sujeitos(itens: list[ItemEscolha], *,
                 t = {n: pontua_sujeito(s, sub)["taxa"] for n, s in SUJEITOS_DEGENERADOS.items()}
                 m = max(t, key=lambda n: t[n])
                 por_estrato.append((estrato, m, t[m]))
-                if t[m] >= LIMIAR_BANCO_SOLUVEL:
+                tb = {n: fn(sub) for n, fn in SUJEITOS_DE_BANCO.items()}
+                por_estrato_banco.extend((estrato, n, v) for n, v in tb.items())
+                # O melhor RESPONDEDOR continua sendo o que `por_estrato` reporta; o sujeito
+                # de banco entra no veredito sem deslocar o piso do estrato.
+                if t[m] >= LIMIAR_BANCO_SOLUVEL or any(v >= LIMIAR_BANCO_SOLUVEL
+                                                       for v in tb.values()):
                     solveis.append(estrato)
 
     return LaudoSujeitos(taxas=taxas, nulo_empirico=taxas[melhor], melhor_degenerado=melhor,
                          solventes=solventes, por_estrato=tuple(por_estrato),
-                         estratos_solveis=tuple(solveis))
+                         estratos_solveis=tuple(solveis), taxas_de_banco=taxas_de_banco,
+                         por_estrato_banco=tuple(por_estrato_banco))

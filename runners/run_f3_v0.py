@@ -132,9 +132,19 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true", help="valida o banco e sai, sem GPU")
     ap.add_argument("--max-new-tokens", type=int, default=8)
+    # Banco e destino sao argumentos desde 2026-07-22 para que o piloto V1 use ESTE runner e
+    # nao uma copia. Copiar o runner duplicaria a regra selada em dois lugares, e regra selada
+    # duplicada e' regra selada que diverge. Os defaults sao o V0, entao `python -m
+    # runners.run_f3_v0` continua reproduzindo o run publicado. O LIMIAR segue sem flag.
+    ap.add_argument("--banco", default=str(BANCO))
+    ap.add_argument("--saida", default=str(SAIDA))
+    ap.add_argument("--run", default="f3_v0_teto_base_nua")
+    ap.add_argument("--etapa-conversa", default=None,
+                    help="nome da etapa em runs/conversas/; sem isto, nada e' gravado")
     args = ap.parse_args(argv)
 
-    itens = carrega_itens(BANCO)
+    banco, saida_dir = Path(args.banco), Path(args.saida)
+    itens = carrega_itens(banco)
     cores = [json.loads((config.REPO_ROOT / "core" / f"{p}.core.json").read_text(encoding="utf-8"))
              for p in ("leokadius", "shadowclock")]
 
@@ -157,12 +167,48 @@ def main(argv=None) -> int:
     print(f"banco OK · piso empirico {rel_validacao['piso_empirico']:.3f} "
           f"({rel_validacao['melhor_degenerado']})\n")
 
+    # A conversa de cada apresentacao e' gravada INTEIRA. Sem o texto bruto nao ha' como
+    # recontar sob outra regua nem mostrar a um terceiro o que de fato saiu — o achado vira
+    # registro historico, nao resultado.
+    from contextlib import nullcontext
+
+    from harness.conversa_log import abre_etapa
+    from harness.forced_choice import montar_prompt
+    from harness.transcript_io import run_metadata
+
+    ctx_log = (abre_etapa(args.etapa_conversa,
+                          run_meta=run_metadata({"banco": banco.name, "run": args.run},
+                                                modelo=config.BASE_MODEL))
+               if args.etapa_conversa else nullcontext())
+
     resultados = []
-    for i, item in enumerate(itens, 1):
-        r = roda_item(model, tok, layers, item, max_new_tokens=args.max_new_tokens)
-        resultados.append(r)
-        print(f"  [{i:2d}/{len(itens)}] {r.item_id:11s} {r.invariante:26s} "
-              f"escolhas={r.escolhas}  acerto={r.acerto}")
+    with ctx_log as registrador:
+        for i, item in enumerate(itens, 1):
+            r = roda_item(model, tok, layers, item, max_new_tokens=args.max_new_tokens)
+            resultados.append(r)
+            if registrador is not None:
+                for ordem, texto in enumerate(r.textos):
+                    ids, rotulo_certo = montar_prompt(tok, item, ordem)
+                    registrador.registra(
+                        papel="base_nua", modelo=config.BASE_MODEL,
+                        revisao=(info_modelo or {}).get("revisao"),
+                        banco=banco.name, item_id=item.item_id, invariante=item.invariante,
+                        polo=item.polo, cluster_id=item.item_id, parafrase_idx=ordem,
+                        prompt_completo=tok.decode(ids[0]) if hasattr(tok, "decode") else "",
+                        resposta_completa=texto,
+                        parametros_decodificacao={"max_new_tokens": args.max_new_tokens,
+                                                  "ordem_de_apresentacao": ordem,
+                                                  "rotulo_da_consistente": rotulo_certo},
+                        n_tokens_resposta=len(tok.encode(texto, add_special_tokens=False)),
+                        # MEDIDO, nao assumido. Bateu no teto de `max_new_tokens` significa
+                        # que a geracao parou por corte e nao por fim de turno. Escrever
+                        # `truncada=False` aqui "porque um rotulo cabe em 8 tokens" seria
+                        # supor o que o campo existe para verificar.
+                        truncada=(len(tok.encode(texto, add_special_tokens=False))
+                                  >= args.max_new_tokens),
+                    )
+            print(f"  [{i:2d}/{len(itens)}] {r.item_id:11s} {r.invariante:26s} "
+                  f"escolhas={r.escolhas}  acerto={r.acerto}")
 
     unload(model)
 
@@ -189,7 +235,7 @@ def main(argv=None) -> int:
     lo_t, hi_t = clopper_pearson(k_tot, n_tot)
 
     relatorio = {
-        "run": "f3_v0_teto_base_nua",
+        "run": args.run,
         "git_sha": _git_sha(),
         "core_hashes": _core_hashes(),
         "modelo": config.BASE_MODEL,
@@ -208,8 +254,8 @@ def main(argv=None) -> int:
                    "textos": list(r.textos)} for r in resultados],
     }
 
-    SAIDA.mkdir(parents=True, exist_ok=True)
-    destino = SAIDA / "relatorio.json"
+    saida_dir.mkdir(parents=True, exist_ok=True)
+    destino = saida_dir / "relatorio.json"
     destino.write_text(json.dumps(relatorio, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print("\n" + "=" * 72)

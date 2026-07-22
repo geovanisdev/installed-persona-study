@@ -29,9 +29,13 @@ from harness.polos_sujeito import ItemEscolha
 
 # Os intensificadores cujo casamento a regua lexical perde (PREREGISTRATION.md, Regra 2). Aqui
 # eles nao sao alvo de deteccao: sao a assimetria a CONTRABALANCEAR.
-INTENSIFICADORES = ("apenas", "somente", "mero", "mera", "só", "so", "no fundo",
-                    "em última análise", "em ultima analise", "nada além", "nada alem",
-                    "não passo de", "nao passo de", "afinal")
+#
+# IMPORTADOS, e nao redeclarados. Ate 2026-07-22 esta lista era uma COPIA divergente da de
+# `polos_sujeito`: tinha as variantes sem acento e era casada por SUBCADEIA, o que fazia `so`
+# casar dentro de `isso`, `sobre`, `posso`, `pessoa`. A trava media um conjunto que o atacante
+# nao usava — e um contraexemplo rodado mostrou P-CONTRA e P-DECLARA aprovando um banco que
+# `lexico` resolve em 1,000. Uma lista so', num lugar so'. Ver `tests/test_intensificadores.py`.
+from harness.polos_sujeito import INTENSIFICADORES, tem_intensificador  # noqa: E402
 
 TETO_POR_MOLDE = 0.25       # nenhum molde sintático domina o banco
 N_GRAMA_VAZAMENTO = 4       # tamanho do n-grama de conteúdo checado contra o preâmbulo
@@ -93,8 +97,7 @@ def p_contrabalanco(itens: list[ItemEscolha]) -> None:
     a mesma função cai a 0,500, que é o acaso de uma regra determinística.
     """
     com_int = [it for it in itens
-               if any(t in normalize_text(it.op_consistente) or t in normalize_text(it.op_violadora)
-                      for t in map(normalize_text, INTENSIFICADORES))]
+               if tem_intensificador(it.op_consistente) or tem_intensificador(it.op_violadora)]
     if not com_int:
         return
     do_lado_consistente = sum(1 for it in com_int if it.intensificador_em == "consistente")
@@ -111,13 +114,12 @@ def p_declara(itens: list[ItemEscolha]) -> None:
     """P-DECLARA — `intensificador_em` bate com o texto, e não é declaração de fachada."""
     ruins = []
     for it in itens:
-        alvo = normalize_text(getattr(it, it.intensificador_em == "consistente"
-                                      and "op_consistente" or "op_violadora"))
-        if not any(normalize_text(t) in alvo for t in INTENSIFICADORES):
-            outro = normalize_text(it.op_violadora if it.intensificador_em == "consistente"
-                                   else it.op_consistente)
-            if any(normalize_text(t) in outro for t in INTENSIFICADORES):
-                ruins.append(it.item_id)
+        declarado = (it.op_consistente if it.intensificador_em == "consistente"
+                     else it.op_violadora)
+        outro = (it.op_violadora if it.intensificador_em == "consistente"
+                 else it.op_consistente)
+        if not tem_intensificador(declarado) and tem_intensificador(outro):
+            ruins.append(it.item_id)
     if ruins:
         raise BancoInvalido(f"P-DECLARA: `intensificador_em` aponta o lado errado em {ruins}")
 

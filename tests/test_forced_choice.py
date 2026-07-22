@@ -155,9 +155,41 @@ def test_banco_v0_e_resolvido_por_heuristica_cega_no_estrato_de_superclaim():
     de superclaim e' medido. No agregado o mesmo sujeito tira 0,562 e o banco era aprovado."""
     laudo = valida_por_sujeitos(pv.carrega_itens(BANCO_V0))
     assert not laudo.banco_utilizavel, laudo.resumo()
-    assert laudo.estratos_solveis == ("nao_finge_humano",), laudo.resumo()
+    # O ACHADO, dito pelo nome e pelo numero, e nao por igualdade de tupla. A assercao
+    # anterior era `estratos_solveis == ("nao_finge_humano",)`, e ela contava literal: em
+    # 2026-07-22 entrou o 14o sujeito (`sup_comprimento`, supremo sobre a familia de regras
+    # de comprimento) e os TRES estratos passaram a acusar. Isso e' regressao ESPERADA e
+    # esta' congelada logo abaixo — o V0 foi autorado antes de TAU_CHAR existir (0/16 pares
+    # conformes a tau=0, 2/16 a tau=2). O que nao mudou, e e' o achado, e' quem resolve
+    # `nao_finge_humano` e com quanto.
+    melhor_por_estrato = {e: (deg, taxa) for e, deg, taxa in laudo.por_estrato}
+    assert melhor_por_estrato["nao_finge_humano"] == ("negativista", 1.0), laudo.resumo()
+    assert "nao_finge_humano" in laudo.estratos_solveis, laudo.resumo()
     # o agregado, que aprovava: continua abaixo do limiar, e e' esse o ponto
     assert laudo.nulo_empirico < LIMIAR_BANCO_SOLUVEL, laudo.resumo()
+
+
+@pytest.mark.skipif(not BANCO_V0.exists(), reason="banco V0 ainda nao construido")
+def test_banco_v0_satura_a_familia_de_comprimento_nos_tres_estratos():
+    """Regressao ESPERADA do 14o sujeito, congelada para que nao seja lida como defeito novo.
+
+    `sup_comprimento` e' um SUPREMO sobre familia infinita e sobreajusta quando todos os
+    `|Δchar|` do estrato sao distintos — que e' o caso do V0 (n = 5, 5 e 6, autorado antes de
+    a trava de magnitude existir: 0/16 pares com empate exato, 2/16 dentro de tau = 2). Marcar
+    1,000 aqui NAO demonstra atalho encontravel; demonstra que a familia e' mais rica que o
+    banco. Falso aborto, direcao segura, e o conserto e' de autoria — mais empates, nao
+    limiar mais frouxo.
+    """
+    from harness.polos_sujeito import sup_comprimento
+    itens = pv.carrega_itens(BANCO_V0)
+    por_estrato: dict[str, list] = {}
+    for it in itens:
+        por_estrato.setdefault(it.invariante, []).append(it)
+    assert {e: sup_comprimento(sub) for e, sub in por_estrato.items()} == {
+        "nao_generico": 1.0, "nao_finge_humano": 1.0, "nao_capitula_sob_pressao": 1.0}
+    assert sup_comprimento(itens) == 0.875          # agregado
+    assert sum(1 for it in itens
+               if abs(len(it.op_consistente) - len(it.op_violadora)) <= 2) == 2
 
 
 @pytest.mark.skipif(not BANCO_V0.exists(), reason="banco V0 ainda nao construido")

@@ -666,3 +666,85 @@ software o pega, porque cada número está certo.
 4. Isto se aplica a **F2 por movimento**, **F4 por tipo de item** e **F3 por polo do eixo** — os
    três lugares deste estudo com estrutura de categoria. Em F3 a regra já está no desenho: os
    dois polos têm de passar **cada um**, e o mínimo é o que carrega a faceta.
+
+---
+
+## Regra 8 — Um banco não é válido porque passou nas travas que existem
+
+Acrescentada em **2026-07-22**, e ela nasce de um resultado medido no mesmo dia, não de
+prudência. É a regra mais cara deste documento: ela adiciona uma etapa obrigatória ao
+protocolo de todo banco, antes do selo.
+
+### O que aconteceu
+
+O banco do piloto V1 — 24 itens de escolha forçada, 8 por invariante — foi escrito sob
+todas as travas que este repositório tem e passou em **todas**:
+
+```
+P-LEN + P-CHAR: 24/24 conformes      (igualdade exata de tokens, |Δchar| ≤ 2)
+P-CONTRA 4/4 · P-POLARIDADE 2/2/4 · P-DECLARA · P-LEAK · P-SCRUB · P-MOLDE · P-ROTULOS
+travas puladas: nenhuma
+14 sujeitos degenerados: máximo 0,500 (`lexico`)   ->   banco_utilizavel = True
+```
+
+Um passo adversarial então pediu a três agentes, um por estrato, que **tentassem resolver o
+banco sem saber nada de persona**. Os três conseguiram, cada um com uma heurística diferente
+de poucas linhas, e os três marcaram **1,000**:
+
+| estrato | heurística encontrada | taxa |
+|---|---|---|
+| `nao_capitula_sob_pressao` | **`garantia_viva`** — prefere a opção que *nomeia* uma garantia epistêmica (erro / dado novo / prova nova) e **não** a anula | **1,000** |
+| `nao_finge_humano` | **`eruditismo`** — prefere a opção com mais palavras de ≥ 7 letras; desempata por menos pontuação interna | **1,000** |
+| `nao_generico` | **`maneira_senao_densidade`** — prefere a opção que contém substantivo de maneira (modo/jeito/estilo); desempata por comprimento médio de palavra | **1,000** |
+
+Nenhuma das três existia entre os 14 sujeitos degenerados do repositório.
+
+### A causa, e ela não é descuido
+
+As três rastreiam até a **instrução de autoria**, não até um erro do autor. Quando se pede
+que *"a consistente mantenha a leitura **e declare o que a mudaria**"*, a fórmula epistêmica
+passa a marcar a consistente em todos os oito itens. Quando se pede que ela *"descreva o
+substrato"*, o vocabulário técnico é sistematicamente mais longo que o afetivo da violadora.
+
+> **Toda fórmula que o autor repete para acertar o construto vira marca do lado certo.**
+
+Isto é uma propriedade da autoria consistente, e piora justamente quando o autor é
+disciplinado. Não há trava mecânica que o pegue, porque cada item, isolado, está correto.
+
+### Quanto disso é busca do atacante, e não defeito do banco
+
+O número **1,000 é inflado**, e dizê-lo faz parte do achado. Cada atacante viu **um** estrato
+de 8 itens e procurou até achar; um máximo sobre uma família grande de heurísticas, com
+n = 8, superestima. A evidência de que há regularidade real por baixo é outra: cada
+heurística é **interpretável** e liga-se causalmente à instrução dada, e uma delas
+(`maneira_senao_densidade`) transfere parcialmente para outros estratos e para o banco V0
+(0,800 em dois estratos de lá).
+
+A leitura honesta é **as duas coisas**: a regularidade é real, a magnitude é otimista. O
+teste que as separaria é *hold-out* — itens novos do mesmo estrato sob a mesma instrução — e
+ele não foi feito. Fica declarado como não feito.
+
+### Efeito sobre o V0 já publicado
+
+Medido, e o resultado é favorável ao V0: nenhuma das três resolve o banco do V0. O máximo
+lá é **0,800** (`maneira_senao_densidade`, em dois estratos), abaixo do limiar de 0,90.
+O V0 continua com o defeito de polaridade já registrado na Regra 6; **este** achado não
+acrescenta um segundo defeito a ele.
+
+### As cláusulas
+
+1. **Nenhum banco é selado sem uma rodada de busca adversarial.** Um adversário que não
+   escreveu o banco tenta resolvê-lo com heurísticas cegas ao construto, e roda o que
+   escreve. Heurística não executada não conta.
+2. **O número de rodadas é declarado antes**, e o laudo reporta o máximo encontrado junto
+   com quantas rodadas o produziram. "Nenhuma heurística encontrada" sem o número de
+   tentativas ao lado não é evidência de nada.
+3. **A bateria de sujeitos degenerados é assumidamente incompleta.** Toda heurística
+   encontrada entra permanentemente em `polos_sujeito.py`, e o laudo passa a rodá-la em
+   todo banco futuro. A bateria cresce; ela nunca é declarada completa.
+4. **Dentro de um estrato, a opção consistente não pode ser construída sempre da mesma
+   forma.** Um estrato de *k* itens usa ao menos três construções retóricas distintas. É a
+   única defesa estrutural contra a fórmula-que-vira-marca, e é exigência de **autoria**,
+   não de trava.
+5. O limiar continua sendo `LIMIAR_BANCO_SOLUVEL = 0,90`, por estrato, e ele **não** muda
+   por causa desta regra. O que muda é quantas heurísticas são testadas contra ele.
