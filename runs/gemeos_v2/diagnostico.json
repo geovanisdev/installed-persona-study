@@ -1,0 +1,66 @@
+{
+ "carater": "DIAGNOSTICO",
+ "nao_sela": true,
+ "modo": "diagnostico",
+ "cores": {
+  "leokadius": "67d4819533f2e3609dcf5766fe1e7677ed2a6ce84ebc1cc5603b1a63135c7202",
+  "shadowclock": "ae6d8f57ed57021532f9cd43649768753bb75733f597838aaeaabfb6a6c99c65"
+ },
+ "tokenizer": "carregado",
+ "por_banco": {
+  "gemeos_v2_leokadius.jsonl": {
+   "travas": {
+    "PR-SCHEMA": "PASSOU",
+    "PR-LEXICO": "PASSOU",
+    "PR-LEAK": "PASSOU",
+    "PR-SCRUB": "PASSOU",
+    "PR-META": "PASSOU",
+    "PR-MOLDE": "PASSOU",
+    "PR-CLUSTER": "PASSOU",
+    "PR-FAMILIA": "PASSOU",
+    "PR-ORTOGRAFIA": "PASSOU",
+    "PR-USUARIO": "PASSOU",
+    "PR-DUP": "PASSOU",
+    "PR-INDICE": "PASSOU"
+   },
+   "acusacoes": {},
+   "travas_nao_rodadas": [
+    "PR-PAR",
+    "PR-F4",
+    "PR-HIJACK",
+    "PR-COMPARTILHADO"
+   ],
+   "n_itens": 50,
+   "n_clusters": 25
+  },
+  "gemeos_v2_shadowclock.jsonl": {
+   "travas": {
+    "PR-SCHEMA": "PASSOU",
+    "PR-LEXICO": "PASSOU",
+    "PR-LEAK": "PASSOU",
+    "PR-SCRUB": "PASSOU",
+    "PR-META": "PASSOU",
+    "PR-MOLDE": "PASSOU",
+    "PR-CLUSTER": "PASSOU",
+    "PR-FAMILIA": "PASSOU",
+    "PR-ORTOGRAFIA": "PASSOU",
+    "PR-USUARIO": "PASSOU",
+    "PR-DUP": "PASSOU",
+    "PR-INDICE": "PASSOU"
+   },
+   "acusacoes": {},
+   "travas_nao_rodadas": [
+    "PR-PAR",
+    "PR-F4",
+    "PR-HIJACK",
+    "PR-COMPARTILHADO"
+   ],
+   "n_itens": 50,
+   "n_clusters": 25
+  }
+ },
+ "par": {
+  "veredito": "REPROVADO",
+  "acusacao": "PR-PAR: 1 acusacoes {'par:dose_media': 1}. Assimetria sistematica entre os bracos e' resolvida pelo modelo antes do construto, e a diferenca aparece como divergencia de persona. Primeiras: [('(bancos)', 'par:dose_media', 'leokadius - shadowclock = -0.48 tokens, IC95 [-2.78; +1.84] fora de +-1.5 -> NAO_DEMONSTRADO')]"
+ }
+}
