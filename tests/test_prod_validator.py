@@ -1054,23 +1054,51 @@ def test_paridade_limpa_e_paritaria(cores):
 def test_margem_de_dose_exige_o_n_do_desenho(cores):
     """A margem de +-1,5 token e' ALCANCAVEL em 90 clusters e INALCANCAVEL em 6.
 
-    Medido aqui, com a MESMA variancia dos dois lados e diferenca media zero: em 6 clusters o
-    IC bootstrap abre alem de +-1,5 e o veredito e' NAO-DEMONSTRADO; em 90 ele fecha e o
-    veredito e' PARITARIO. Isto nao e' defeito da trava — e' a propriedade que a torna
-    honesta, e o oposto de um teste de diferenca, onde n pequeno *ajuda* a conclusao de
-    igualdade. Fica registrado porque a consequencia e' de cronograma: um banco piloto
-    pequeno NAO pode ser selado por PR-PAR, e a razao nao e' o banco, e' o n.
+    REESCRITO EM 2026-07-22, quando o estimador virou PAREADO por decisao do Arquiteto. O que
+    muda: sob duas amostras bastava a dispersao ENTRE clusters para abrir o IC, e a versao
+    anterior deste teste usava os MESMOS tamanhos dos dois lados — delta pareado zero em todo
+    par. Sob o estimador pareado aquele banco passa em qualquer n, porque nao ha' o que variar.
+
+    A propriedade continua verdadeira, mas o que a produz e' outro: e' o desvio-padrao do
+    DELTA POR PAR, e nao a dispersao de comprimento do banco. Aqui os pares alternam +-3, que
+    e' exatamente o teto por par — e portanto a pior dispersao que a trava vizinha admite. E'
+    a aritmetica do proprio comentario de `MARGEM_DOSE_MEDIA_TOKENS`, rodando:
+
+        "com |delta_j| <= 3 o desvio-padrao de delta e' <= 3 e a semilargura do IC em 90
+         clusters fica ~0,35 token"
+
+    CUSTO DECLARADO DA MUDANCA: um banco com pares BEM CASADOS agora pode passar em PR-PAR com
+    n pequeno, o que sob duas amostras era impossivel. A protecao de cronograma — "banco piloto
+    pequeno nao pode ser selado por PR-PAR" — deixou de ser automatica e passou a depender de o
+    banco ter pares mal casados. Isto NAO estava na lista de custos apresentada ao Arquiteto e
+    esta' registrado aqui e em `runs/gemeos_v2/LEITURA.md`.
     """
-    pequeno_a = _banco_par("leokadius", _TAMANHOS_90[:6])
-    pequeno_b = _banco_par("shadowclock", _TAMANHOS_90[:6])
-    laudo_p, _ = PV._acusa_par(tok_palavras, pequeno_a, pequeno_b, cores)
+    jitter = [t + (3 if i % 2 else -3) for i, t in enumerate(_TAMANHOS_90)]
+
+    laudo_p, _ = PV._acusa_par(tok_palavras, _banco_par("leokadius", _TAMANHOS_90[:6]),
+                               _banco_par("shadowclock", jitter[:6]), cores)
     assert laudo_p["diferenca_a_menos_b"] == pytest.approx(0.0)
     assert laudo_p["veredito"] == "NAO_DEMONSTRADO"
     assert laudo_p["ci95_bootstrap"][1] > PV.MARGEM_DOSE_MEDIA_TOKENS
 
     grande, _ = PV._acusa_par(tok_palavras, _banco_par("leokadius", _TAMANHOS_90),
-                              _banco_par("shadowclock", _TAMANHOS_90), cores)
+                              _banco_par("shadowclock", jitter), cores)
     assert grande["veredito"] == "PARITARIO"
+    assert grande["ci95_bootstrap"][1] < 1.0, "a semilargura prevista pelo comentario da margem"
+
+
+def test_pares_bem_casados_passam_com_n_pequeno_e_isso_e_o_custo(cores):
+    """O custo da troca de estimador, em teste executavel e nao so' em prosa.
+
+    Delta por par exatamente zero em 6 clusters: PARITARIO. Sob duas amostras o mesmo banco
+    dava NAO_DEMONSTRADO, porque o IC nao sabia que os pares se cancelavam. Se o Arquiteto
+    decidir que a protecao de n minimo tem de voltar, ela vira clausula PROPRIA — nunca efeito
+    colateral de um estimador impreciso.
+    """
+    laudo, _ = PV._acusa_par(tok_palavras, _banco_par("leokadius", _TAMANHOS_90[:6]),
+                             _banco_par("shadowclock", _TAMANHOS_90[:6]), cores)
+    assert laudo["veredito"] == "PARITARIO"
+    assert laudo["pares_encontrados"] == 6
 
 
 def test_delta_por_par_acima_do_teto_aborta(cores):
@@ -1091,26 +1119,48 @@ def test_delta_por_par_acima_do_teto_aborta(cores):
 
 
 def test_vies_medio_dentro_da_margem_mas_com_ic_estourado_aborta(cores):
-    """(49) O caso que um teste de SIGNIFICANCIA aprovaria.
+    """(49) O caso que um teste de SIGNIFICANCIA aprovaria: media zero, intervalo largo.
 
-    Diferenca media EXATAMENTE zero e intervalo largissimo. Memoria do bug de
-    `gate_equivalencia`: 40/40 contra 10/40 saia como equivalencia TRUE porque o gate olhava
-    um lado so'.
+    Memoria do bug de `gate_equivalencia`: 40/40 contra 10/40 saia como equivalencia TRUE
+    porque o gate olhava um lado so'. O gate continua BILATERAL, e continua acusando.
+
+    O QUE MUDOU EM 2026-07-22 com o estimador pareado: dispersao grande de delta agora estoura
+    TAMBEM o teto por par, porque e' o mesmo delta que as duas clausulas leem. As duas acusam
+    juntas, e o teste passa a exigir as duas — antes so' a de banco via este caso.
     """
-    a = _banco_par("leokadius", [5, 45] * 45, com_par_id=False)
-    b = _banco_par("shadowclock", [25] * 90, com_par_id=False)
+    a = _banco_par("leokadius", [5, 45] * 45)
+    b = _banco_par("shadowclock", [25] * 90)
     laudo, _ = PV._acusa_par(tok_palavras, a, b, cores)
     assert laudo["diferenca_a_menos_b"] == pytest.approx(0.0)
+    assert laudo["veredito"] == "NAO_DEMONSTRADO"
+    with pytest.raises(Invalido) as exc:
+        PV.valida_paridade_entre_bracos(tok_palavras, a, b, cores)
+    assert {"par:dose_media", "par:delta_por_par"} <= clausulas(exc)
+
+
+def test_vies_SISTEMATICO_dentro_do_teto_por_par_so_a_clausula_de_BANCO_pega(cores):
+    """A divisao de trabalho depois da troca de estimador, e ela ficou mais limpa.
+
+    Todo par a +3 tokens: DENTRO do teto por par, que so' olha um par por vez e nao ve' que
+    todos apontam para o mesmo lado. A clausula de banco ve', e acusa ENVIESADO. E' o caso
+    inverso do teste acima, e junto com ele mostra a particao: o teto por par pega DISPERSAO,
+    a clausula de banco pega DESLOCAMENTO.
+    """
+    a = _banco_par("leokadius", [28] * 90)
+    b = _banco_par("shadowclock", [25] * 90)
+    laudo, _ = PV._acusa_par(tok_palavras, a, b, cores)
+    assert laudo["diferenca_a_menos_b"] == pytest.approx(3.0)
+    assert laudo["veredito"] == "ENVIESADO"
     with pytest.raises(Invalido) as exc:
         PV.valida_paridade_entre_bracos(tok_palavras, a, b, cores)
     assert "par:dose_media" in clausulas(exc)
-    assert "NAO_DEMONSTRADO" in str(exc.value)
+    assert "par:delta_por_par" not in clausulas(exc), "cada par esta' no teto, nao acima dele"
 
 
 def test_gate_de_dose_e_simetrico(cores):
     """(50) Trocar `banco_a` por `banco_b` nao muda o veredito. Por construcao, nao por sorte."""
-    a = _banco_par("leokadius", [5, 45] * 45, com_par_id=False)
-    b = _banco_par("shadowclock", [25] * 90, com_par_id=False)
+    a = _banco_par("leokadius", [5, 45] * 45)
+    b = _banco_par("shadowclock", [25] * 90)
     la, _ = PV._acusa_par(tok_palavras, a, b, cores)
     lb, _ = PV._acusa_par(tok_palavras, b, a, cores)
     assert la["veredito"] == lb["veredito"]
@@ -1121,8 +1171,8 @@ def test_gate_de_dose_e_simetrico(cores):
 
 def test_gate_de_dose_e_simetrico_tambem_quando_reprova_por_vies(cores):
     """Simetria tambem no veredito ENVIESADO, onde o sinal importa."""
-    a = _banco_par("leokadius", [30] * 90, com_par_id=False)
-    b = _banco_par("shadowclock", [10] * 90, com_par_id=False)
+    a = _banco_par("leokadius", [30] * 90)
+    b = _banco_par("shadowclock", [10] * 90)
     la, _ = PV._acusa_par(tok_palavras, a, b, cores)
     lb, _ = PV._acusa_par(tok_palavras, b, a, cores)
     assert la["veredito"] == lb["veredito"] == "ENVIESADO"
@@ -1131,9 +1181,14 @@ def test_gate_de_dose_e_simetrico_tambem_quando_reprova_por_vies(cores):
 
 
 def test_veredito_nao_demonstrado_nao_sela(banco, cores, tmp_path):
-    """(51) Nem por PR-PAR, nem por trava pulada."""
-    a = _banco_par("leokadius", [5, 45] * 45, com_par_id=False)
-    b = _banco_par("shadowclock", [25] * 90, com_par_id=False)
+    """(51) Nem por PR-PAR, nem por trava pulada.
+
+    O banco e' pequeno com pares no teto (+-3): sob o estimador pareado e' assim que se produz
+    NAO_DEMONSTRADO sem estourar tambem o teto por par, e a mensagem tem de nomear o veredito.
+    """
+    a = _banco_par("leokadius", _TAMANHOS_90[:6])
+    b = _banco_par("shadowclock", [t + (3 if i % 2 else -3)
+                                   for i, t in enumerate(_TAMANHOS_90[:6])])
     with pytest.raises(Invalido) as exc:
         PV.valida_paridade_entre_bracos(tok_palavras, a, b, cores)
     assert "NAO_DEMONSTRADO" in str(exc.value)

@@ -41,7 +41,14 @@ Foram necessárias **duas rodadas** de conserto, todas nomeadas pelo modo `diagn
 `ortografia:texto_longo_sem_acento` — três delas em `construto`, campo que o modelo não lê mas
 que a Regra 4 cobre — e onze pares fora do teto de dose.
 
-## O que reprovou: `PR-PAR`, e não é do banco
+## O que reprovou: `PR-PAR`, e não era do banco — RESOLVIDO no mesmo dia
+
+> **2026-07-22, depois desta leitura.** O Arquiteto decidiu a primeira das três saídas abaixo:
+> **volta o bootstrap pareado**. Registrada em `PREREGISTRATION.md` § *"Decisão 2026-07-22"*.
+> Sob o estimador restaurado o slice v2 dá **`PARITARIO`**, IC95 **[−1,08; +0,12]**, cobertura
+> do pareamento **1,0** — e o **slice piloto velho também passa**, o que confirma que o
+> veredito nunca foi sobre o conteúdo de banco nenhum. A seção abaixo fica como o registro da
+> medição que produziu a decisão.
 
 ```
 par:dose_media   leokadius − shadowclock = −0,48 tokens
@@ -95,7 +102,7 @@ demais com 20 clusters. A n = 90 ele encolhe."* Encolhe, mas **não o bastante p
 margem o que ela parece ser**. Eu tratei largura de intervalo como problema de tamanho de
 amostra quando era, em parte, escolha de estimador.
 
-## O que NÃO foi feito, e por quê
+## O que eu não fiz, e por quê
 
 Não mexi em `_bootstrap_duas_amostras` nem em `MARGEM_DOSE_MEDIA_TOKENS`.
 
@@ -104,7 +111,7 @@ mudança faria o meu próprio banco passar. É a forma canônica do defeito que 
 registra desde o gate `LCB ≥ 0,75`. O pré-registro ainda está em DRAFT, o que faz deste o
 momento certo para a decisão **aparecer** — e ela é do Arquiteto, não minha.
 
-Três saídas, sem recomendação embutida no código:
+Três saídas, sem recomendação embutida no código — **a 1 foi a escolhida**:
 
 1. **Manter duas amostras e afrouxar a margem** para o que ela operacionalmente já é. Custo: a
    margem passa a ser derivada da variância observada, e variância observada é dado do banco.
@@ -114,6 +121,21 @@ Três saídas, sem recomendação embutida no código:
    trava passa a exigir uma estrutura que o desenho cruzado declarou não usar.
 3. **Manter tudo e aceitar `NÃO-DEMONSTRADO` como veredito esperado**, tratando `par:dose_media`
    como descritivo e não como gate. Custo: some a única guarda mecânica de assimetria de dose.
+
+### O custo que eu não previ, e que apareceu ao implementar
+
+A lista acima estava incompleta. Sob duas amostras, um banco pequeno dava `NÃO-DEMONSTRADO` **por
+construção** — a própria suíte registrava isso como consequência de cronograma: *"um banco piloto
+pequeno NÃO pode ser selado por PR-PAR, e a razão não é o banco, é o n"*. Sob o pareado, um banco
+de pares bem casados passa com **n = 6**.
+
+Ou seja: a saída 1 comprou precisão e **vendeu uma proteção de tamanho de amostra** que ninguém
+tinha decidido vender, porque ninguém — eu inclusive — tinha percebido que ela existia como
+efeito colateral do estimador impreciso.
+
+Está fixado em `test_pares_bem_casados_passam_com_n_pequeno_e_isso_e_o_custo` e declarado na
+emenda do módulo. Se a proteção tiver de voltar, volta como **cláusula própria de *n* mínimo** —
+nunca de novo como subproduto de uma imprecisão.
 
 ## Busca adversarial: o critério é transferência, e a pergunta não é a do F3
 

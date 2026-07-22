@@ -910,3 +910,64 @@ cobertura que não entrega.
 E a medição de 2026-07-22 fechou a porta para a alternativa mecânica: **nenhuma medida de string
 separa a mesma história recontada** — o cenário reciclado `c00`/`c05` está a Jaccard 0,156, mais
 distante que pares legítimos, precisamente porque a redação mudou.
+
+## Decisão 2026-07-22 — o estimador de `par:dose_media`
+
+**Decidida pelo Arquiteto**, com três saídas apresentadas e custo escrito em
+`runs/gemeos_v2/LEITURA.md`. Registrada aqui porque muda uma **medição**, e o pré-registro é
+onde as medições vivem. Enquanto este documento estiver em DRAFT, mudanças entram como esta;
+depois do selo, só por ADR datado.
+
+### O que estava errado
+
+`MARGEM_DOSE_MEDIA_TOKENS = 1.5` tem procedência escrita em `harness/prod_validator.py`:
+
+> *"Com |delta_j| ≤ 3 o desvio-padrão de delta é ≤ 3 e a semilargura do IC em 90 clusters fica
+> ~0,35 token: a trava é capaz de passar E capaz de falhar."*
+
+`delta_j` é o delta **pareado**, e a conta está correta. Mas a nota de desenho do desenho
+cruzado trocou o estimador — *"deixa de ser bootstrap PAREADO sobre delta_j e vira bootstrap de
+DUAS AMOSTRAS sobre as médias por cluster, com a **mesma** margem bilateral de ±1,5 token"* — e
+`_bootstrap_duas_amostras` reamostra os dois braços com índices independentes. A margem foi
+transportada sem que a conta que a produziu fosse refeita.
+
+Medido no slice v2 (100 prompts escritos à mão; dp entre clusters 4,25; dp do delta pareado 1,53):
+
+| | semilargura, duas amostras | semilargura, pareado |
+|---|---|---|
+| n = 25 | **2,35** — maior que a margem inteira | 0,60 |
+| n = 90 | **1,24** — come 83% da margem | 0,32 |
+
+A n=25 **nenhum** valor de ponto satisfazia a margem, nem zero exato. A n=90 sobravam **±0,26**
+token para o viés real, contra os ±1,5 que o código anuncia. Os dois slices de gêmeos já
+escritos reprovavam por isso — **não por conteúdo**: sob o estimador restaurado, os dois passam.
+
+### O que foi decidido
+
+Volta o **bootstrap pareado sobre `delta_j`**, rodando sobre os pares que existirem. A margem
+não muda: volta a ser o número que a própria procedência dela descreve.
+
+O argumento aceito: o que a nota do cruzado derrubou foi a **bijeção como eixo do contraste**, e
+usar o par para estimar precisão é outra coisa — não reintroduz exigência de estrutura, apenas
+aproveita a que existir.
+
+### O que a decisão explicitamente NÃO faz
+
+Não volta a exigir bijeção. Cobertura incompleta do pareamento é **dado no laudo**
+(`cobertura_do_pareamento`, `clusters_fora_do_pareamento`), nunca acusação — o teste que
+congela o contraexemplo da bijeção quebrada continua verde. A dívida fica declarada: um banco
+de persona com cobertura baixa teria `par:dose_media` falando por um subconjunto, e o laudo
+diria qual, sem que gate nenhum barrasse. No desenho de hoje (90 gêmeos contra 90) a cobertura
+é 1,0.
+
+### Custos medidos DEPOIS da decisão, que não estavam na lista apresentada
+
+1. **A proteção de *n* mínimo deixou de ser automática.** Sob duas amostras, um banco pequeno
+   dava `NÃO-DEMONSTRADO` por construção — *"banco piloto pequeno não pode ser selado por
+   PR-PAR"*. Sob o pareado, um banco de pares bem casados passa com n = 6. Se essa proteção
+   tiver de voltar, volta como **cláusula própria de *n* mínimo**, nunca como efeito colateral
+   de um estimador impreciso.
+2. **As duas cláusulas passaram a ler o mesmo delta**, e a partição entre elas ficou mais
+   nítida: o teto por par pega **dispersão**, a cláusula de banco pega **deslocamento
+   sistemático**. Deixou de existir o caso "IC largo com média zero" sem que o teto por par
+   também acuse.

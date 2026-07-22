@@ -303,6 +303,13 @@ RAZAO_MAXIMA_DE_COMPRIMENTO = 1.30
 TETO_DELTA_POR_PAR_TOKENS = 3
 # Com |delta_j| <= 3 o desvio-padrao de delta e' <= 3 e a semilargura do IC em 90 clusters
 # fica ~0,35 token: a trava e' capaz de passar E capaz de falhar.
+#
+# 2026-07-22: esta conta ficou ORFA por quatro meses. `delta_j` e' o delta PAREADO, e a nota de
+# desenho do CRUZADO trocou o estimador para duas amostras "com a mesma margem", sem refazer a
+# conta — e o estimador novo dava semilargura 1,24 a n=90, quase quatro vezes o previsto aqui.
+# O Arquiteto restaurou o estimador pareado, e a conta acima voltou a descrever o codigo.
+# LICAO, e ela e' geral: margem e estimador sao um PAR. Trocar um obriga a refazer o outro; a
+# margem que sobrevive a troca esta' medindo outra coisa do que quem a leu pensa.
 MARGEM_DOSE_MEDIA_TOKENS = 1.5
 # Se fosse 0: ruido de contagem aborta banco honesto. Se fosse 18: e' o tamanho de uma celula
 # de movimento inteira.
@@ -1667,8 +1674,32 @@ def pr_dup(itens: Sequence[ItemProducao], *,
 # --- PR-PAR (desenho CRUZADO) ------------------------------------------------
 
 
+def _bootstrap_pareado(deltas: Sequence[float]) -> tuple[float, float, float]:
+    """IC95 da media dos deltas POR PAR. O estimador de `par:dose_media` desde 2026-07-22.
+
+    SIMETRICO por construcao e por um motivo mais forte que o do irmao de duas amostras: os
+    indices de reamostragem nao dependem dos valores, entao reamostrar `-d` devolve exatamente
+    o negado de reamostrar `d`. O chamador ainda passa em ordem canonica e reorienta depois,
+    porque a garantia tem de estar no chamador — e' la' que o defeito de `gate_equivalencia`
+    apareceu.
+
+    Por que pareado e nao duas amostras: `harness/prod_validator.py` MARGEM_DOSE_MEDIA_TOKENS
+    e a nota em `_acusa_par`. Em uma linha: a margem foi derivada do delta pareado e depois
+    herdada por um estimador quatro vezes menos preciso.
+    """
+    d = np.asarray(list(deltas), dtype=float)
+    rng = np.random.default_rng(SEMENTE)
+    boot = d[rng.integers(0, len(d), size=(N_BOOT, len(d)))].mean(axis=1)
+    return float(d.mean()), float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))
+
+
 def _bootstrap_duas_amostras(x: Sequence[float], y: Sequence[float]) -> tuple[float, float, float]:
     """IC95 da diferenca de medias, SIMETRICO por construcao.
+
+    NAO E' MAIS o estimador de `par:dose_media` — foi substituido pelo pareado em 2026-07-22
+    por decisao do Arquiteto. Fica no modulo porque `tests/test_alcance_dose_media.py` usa os
+    dois lado a lado para fixar a medicao que produziu a decisao; apagar o estimador antigo
+    apagaria a evidencia de por que ele saiu.
 
     A simetria nao e' verificada empiricamente: a reamostragem acontece numa ordem CANONICA
     (as duas amostras entram ordenadas por nome de braco pelo chamador) e o resultado e'
@@ -1727,8 +1758,7 @@ def _acusa_par(tok, banco_a: Sequence[ItemProducao], banco_b: Sequence[ItemProdu
         ruins.append(("(bancos)", "par:generator", str(sorted(ger))))
 
     # (B) DOSE EM TOKENS. Observacao = media de tokens do cluster (a unidade do desenho e' o
-    # cluster, nao o item). Sob CRUZADO a comparacao e' DE CONJUNTO: bootstrap de duas
-    # amostras, e os DOIS limites do IC95 tem de caber em [-1,5; +1,5].
+    # cluster, nao o item).
     #
     # BILATERAL porque um teste que NAO rejeita nao demonstrou paridade: demonstrou que o n
     # nao bastou. E' o defeito de `gate_equivalencia` — "40/40 contra 10/40 reportado como
@@ -1738,30 +1768,14 @@ def _acusa_par(tok, banco_a: Sequence[ItemProducao], banco_b: Sequence[ItemProdu
                 for cid, membros in g.items()}
 
     da, db = dose(ga), dose(gb)
-    canonico = nome_a <= nome_b
-    x, y = (list(da.values()), list(db.values())) if canonico else \
-        (list(db.values()), list(da.values()))
-    ponto, lo, hi = _bootstrap_duas_amostras(x, y)
-    if not canonico:
-        ponto, lo, hi = -ponto, -hi, -lo
-    dentro = lo >= -MARGEM_DOSE_MEDIA_TOKENS and hi <= MARGEM_DOSE_MEDIA_TOKENS
-    veredito = ("PARITARIO" if dentro else
-                "ENVIESADO" if (lo > MARGEM_DOSE_MEDIA_TOKENS or
-                                hi < -MARGEM_DOSE_MEDIA_TOKENS) else
-                "NAO_DEMONSTRADO")
-    if not dentro:
-        ruins.append(("(bancos)", "par:dose_media",
-                      f"{nome_a} - {nome_b} = {ponto:+.2f} tokens, IC95 [{lo:+.2f}; {hi:+.2f}] "
-                      f"fora de +-{MARGEM_DOSE_MEDIA_TOKENS} -> {veredito}"))
 
-    # O teto POR PAR sobrevive ao CRUZADO onde o par existe: e' ele que da' dentes a' clausula
-    # de banco. Com +-8 a semilargura do IC vai a ~0,95 e um vies medio real de ate' 0,55 token
-    # passa por dentro da margem.
+    # O PAREAMENTO, que agora serve a DUAS clausulas: o teto por par e a dose media.
+    #
     # Um `par_id` que aponta para MAIS DE UM cluster do mesmo lado nao e' par: e' rotulo
-    # repetido. Sob CRUZADO isso e' permitido (a bijecao caiu), mas nao pode ser resolvido em
-    # silencio escolhendo um dos clusters — foi o que a primeira versao fazia, ficando com o
-    # ultimo do dicionario, e o teto por par passava a comparar dois clusters escolhidos por
-    # ordem de iteracao. Ambiguo sai da conta E APARECE NO LAUDO.
+    # repetido. Sob CRUZADO isso e' permitido (a bijecao caiu como exigencia de desenho), mas
+    # nao pode ser resolvido em silencio escolhendo um dos clusters — foi o que a primeira
+    # versao fazia, ficando com o ultimo do dicionario, e o teto por par passava a comparar
+    # dois clusters escolhidos por ordem de iteracao. Ambiguo sai da conta E APARECE NO LAUDO.
     def _por_par(g):
         m: dict[str, list[str]] = {}
         for cid, membros in g.items():
@@ -1772,15 +1786,72 @@ def _acusa_par(tok, banco_a: Sequence[ItemProducao], banco_b: Sequence[ItemProdu
     pa, pb = _por_par(ga), _por_par(gb)
     ambiguos = sorted({p for p, v in pa.items() if len(v) > 1} |
                       {p for p, v in pb.items() if len(v) > 1})
-    pares = 0
-    for pid in sorted(set(pa) & set(pb)):
-        if pid in ambiguos:
-            continue
-        pares += 1
+    pareados = [p for p in sorted(set(pa) & set(pb)) if p not in ambiguos]
+    pares = len(pareados)
+
+    # O teto POR PAR: e' ele que da' dentes a' clausula de banco. Com +-8 a semilargura do IC
+    # vai a ~0,95 e um vies medio real de ate' 0,55 token passa por dentro da margem.
+    for pid in pareados:
         delta = da[pa[pid][0]] - db[pb[pid][0]]
         if abs(delta) > TETO_DELTA_POR_PAR_TOKENS + 1e-9:
             ruins.append((pid, "par:delta_por_par",
                           f"{delta:+.1f} tokens (teto +-{TETO_DELTA_POR_PAR_TOKENS})"))
+
+    # ESTIMADOR PAREADO — DECISAO DO ARQUITETO, 2026-07-22.
+    # Ver PREREGISTRATION.md, "Decisao 2026-07-22 — o estimador de `par:dose_media`".
+    #
+    # A versao anterior usava `_bootstrap_duas_amostras`, herdada da nota de desenho do
+    # CRUZADO, que trocou o estimador "com a MESMA margem bilateral de +-1,5 token". A margem
+    # nunca foi refeita, e o comentario que guarda a conta dela — em MARGEM_DOSE_MEDIA_TOKENS —
+    # descreve `delta_j`, que e' o delta PAREADO. Medido no slice v2 (100 prompts a mao):
+    #
+    #   dp ENTRE clusters 4,25 | dp do delta PAREADO 1,53
+    #   n= 25  duas amostras semilargura 2,35 (MAIOR que a margem inteira) | pareado 0,60
+    #   n= 90  duas amostras semilargura 1,24 (come 83% da margem)         | pareado 0,32
+    #
+    # A n=25 nenhum valor de ponto satisfazia a margem, nem zero exato; a n=90 sobravam +-0,26
+    # para o vies real, contra os +-1,5 que o codigo anuncia. O pareamento existe em 90/90 no
+    # plano, e o que a nota do CRUZADO abandonou foi a BIJECAO COMO EIXO DO CONTRASTE — usar o
+    # par para estimar precisao e' outra coisa.
+    #
+    # COBERTURA — DADO NO LAUDO, e deliberadamente NAO um gate.
+    #
+    # O estimador pareado so' fala pelos clusters que estao pareados. A tentacao e' acusar a
+    # cobertura incompleta, e a primeira versao desta mudanca fazia isso — mas isso reinstala a
+    # BIJECAO como exigencia, que e' precisamente o que a nota do desenho CRUZADO derrubou e o
+    # que `test_bijecao_quebrada_passa_sob_desenho_cruzado` congela como contraexemplo. A
+    # decisao do Arquiteto em 2026-07-22 foi sobre o ESTIMADOR, e nao sobre a bijecao; ir alem
+    # dela seria tomar por conta propria a decisao que nao foi tomada.
+    #
+    # DIVIDA DECLARADA, com o numero a' vista: `cobertura_do_pareamento` no laudo. Se um dia um
+    # banco de persona chegar com cobertura baixa, `par:dose_media` estara' falando por um
+    # subconjunto e o laudo dira' qual — mas nenhum gate barra. No desenho de hoje (90 gemeos
+    # contra 90) a cobertura e' 1,0 e a questao nao se coloca.
+    fora_a = sorted(set(ga) - {pa[p][0] for p in pareados})
+    fora_b = sorted(set(gb) - {pb[p][0] for p in pareados})
+    ponto = lo = hi = 0.0
+    dentro, veredito = False, "NAO_APLICAVEL"
+    if not pareados:
+        ruins.append(("(bancos)", "par:dose_sem_cobertura",
+                      "nenhum par valido: sem pareamento nao ha' o que estimar."))
+    else:
+        # ORDEM CANONICA e reorientacao, como em `_bootstrap_duas_amostras`: um veredito que
+        # dependesse de quem foi passado primeiro nao mediria paridade.
+        canonico = nome_a <= nome_b
+        d = [da[pa[p][0]] - db[pb[p][0]] for p in pareados]
+        ponto, lo, hi = _bootstrap_pareado(d if canonico else [-v for v in d])
+        if not canonico:
+            ponto, lo, hi = -ponto, -hi, -lo
+        dentro = lo >= -MARGEM_DOSE_MEDIA_TOKENS and hi <= MARGEM_DOSE_MEDIA_TOKENS
+        veredito = ("PARITARIO" if dentro else
+                    "ENVIESADO" if (lo > MARGEM_DOSE_MEDIA_TOKENS or
+                                    hi < -MARGEM_DOSE_MEDIA_TOKENS) else
+                    "NAO_DEMONSTRADO")
+        if not dentro:
+            ruins.append(("(bancos)", "par:dose_media",
+                          f"{nome_a} - {nome_b} = {ponto:+.2f} tokens, IC95 "
+                          f"[{lo:+.2f}; {hi:+.2f}] fora de "
+                          f"+-{MARGEM_DOSE_MEDIA_TOKENS} -> {veredito}"))
 
     # (C) FORMA DE CONVOCACAO. Sob CRUZADO a igualdade exata migra do par para o CONJUNTO:
     # as contagens por forma tem de bater exatamente entre os dois bancos. Tolerancia de 0,20
@@ -1817,6 +1888,12 @@ def _acusa_par(tok, banco_a: Sequence[ItemProducao], banco_b: Sequence[ItemProdu
         "diferenca_a_menos_b": ponto, "ci95_bootstrap": [lo, hi],
         "margem": MARGEM_DOSE_MEDIA_TOKENS, "gate_paridade": dentro, "veredito": veredito,
         "pares_encontrados": pares,
+        # A fracao de clusters que o estimador PAREADO de fato cobre. Ver a nota em
+        # `_acusa_par`: e' dado, nao gate, e a razao de nao ser gate esta' escrita la'.
+        "cobertura_do_pareamento": {
+            nome_a: round(pares / len(ga), 3) if ga else 0.0,
+            nome_b: round(pares / len(gb), 3) if gb else 0.0},
+        "clusters_fora_do_pareamento": {nome_a: fora_a, nome_b: fora_b},
         # Sob CRUZADO isto NAO e' erro; e' informacao. Um `par_id` ambiguo simplesmente deixa
         # de receber o teto por par, e quem le o laudo precisa saber quantos ficaram de fora.
         "pares_ambiguos": ambiguos,
@@ -1862,11 +1939,19 @@ def valida_paridade_entre_bracos(tok, banco_a: Sequence[ItemProducao],
         # bilateral, isto passa — e a trava aborta por vacuidade. Derivado, e nao congelado,
         # porque um banco-sentinela fixo de 90 clusters seria uma segunda fonte da verdade
         # sobre a estrutura do banco real.
+        #
+        # O `par_id` e' CARIMBADO nos dois lados desde 2026-07-22. O estimador de dose passou a
+        # ser pareado, e sem par nao ha' o que estimar: um banco de entrada sem `par_id` fazia
+        # o sentinela deixar de disparar por `par:dose_media` e a trava inteira morria por
+        # VACUIDADE. Um controle positivo que so' funciona quando a entrada colabora nao e'
+        # controle positivo — ele constroi a precondicao da clausula que precisa exercitar.
+        base = [ItemProducao(**{**it.__dict__, "par_id": it.par_id or it.cluster_id})
+                for it in its]
         inchado = [ItemProducao(**{**it.__dict__,
                                    "banco": nome_do_irmao, "item_id": it.item_id + "-x",
                                    "prompt": it.prompt + " " + _ENCHIMENTO_DO_SENTINELA})
-                   for it in its]
-        return _acusa_par(tok, list(its), inchado, cores)[1]
+                   for it in base]
+        return _acusa_par(tok, base, inchado, cores)[1]
 
     _controle_positivo("PR-PAR", _sentinela_de_par, sentinelas,
                        extras=[Sentinela("sent-par-derivado", "PR-PAR",
@@ -2366,9 +2451,9 @@ SEM_CONTROLE_POSITIVO: dict[str, str] = {
 # uma propriedade nao usada e' desligada na primeira vez que atrapalha a autoria.
 #
 # O QUE MIGRA, e nao some:
-#   - a paridade de DOSE deixa de ser bootstrap PAREADO sobre delta_j e vira bootstrap de DUAS
-#     AMOSTRAS sobre as medias por cluster, com a mesma margem bilateral de +-1,5 token e os
-#     mesmos tres vereditos;
+#   - [EMENDA 2026-07-22 — a linha original desta lista esta' RETRATADA logo abaixo] a paridade
+#     de DOSE continua sendo bootstrap PAREADO sobre delta_j, com margem bilateral de +-1,5
+#     token e os mesmos tres vereditos, rodando sobre os pares que existirem;
 #   - a igualdade EXATA de `forma_convocacao` migra do par para as CONTAGENS do conjunto;
 #   - o teto por par continua valendo ONDE O PAR EXISTE (`par_id` presente dos dois lados),
 #     porque e' ele que impede a media de ficar parada enquanto os extremos se cancelam;
@@ -2378,3 +2463,36 @@ SEM_CONTROLE_POSITIVO: dict[str, str] = {
 # O que se PERDE e fica declarado: sem bijecao, nao ha' mais garantia de que um cluster de um
 # banco tenha um irmao de mesma oportunidade no outro. A comparabilidade passa a ser de
 # distribuicao, e distribuicoes iguais admitem itens individualmente incomparaveis.
+#
+# ---------------------------------------------------------------------------
+# EMENDA 2026-07-22 — RETRATACAO DA MIGRACAO DE ESTIMADOR DA CLAUSULA DE DOSE
+# ---------------------------------------------------------------------------
+# A lista acima dizia que a dose migrava para bootstrap de DUAS AMOSTRAS "com a mesma margem
+# bilateral de +-1,5 token". As duas metades da frase eram incompativeis, e ninguem refez a
+# conta: a margem tinha sido derivada do delta PAREADO (ver MARGEM_DOSE_MEDIA_TOKENS).
+#
+# Medido no slice v2, 100 prompts a mao (`runs/gemeos_v2/LEITURA.md`):
+#   dp ENTRE clusters 4,25 | dp do delta PAREADO 1,53
+#   n=25  duas amostras semilargura 2,35 — MAIOR que a margem inteira | pareado 0,60
+#   n=90  duas amostras semilargura 1,24 — come 83% da margem         | pareado 0,32
+# A n=25 nenhum valor de ponto satisfazia a margem, nem zero exato; e os DOIS slices de gemeos
+# ja' escritos reprovavam por isso, nao por conteudo.
+#
+# O ARQUITETO decidiu voltar ao pareado. O argumento aceito: o que esta nota derrubou foi a
+# BIJECAO COMO EIXO DO CONTRASTE, e usar o par para estimar precisao e' outra coisa — nao
+# reintroduz exigencia de estrutura, so' aproveita a que existir.
+#
+# O QUE A EMENDA NAO FAZ, de proposito:
+#   - nao volta a exigir bijecao. Cobertura incompleta e' DADO no laudo
+#     (`cobertura_do_pareamento`), nunca acusacao — `test_bijecao_quebrada_passa_sob_desenho
+#     _cruzado` continua verde e continua sendo o contraexemplo que manda;
+#   - nao mexe na margem, que volta a ser o numero que a propria procedencia dela descreve.
+#
+# CUSTOS MEDIDOS DEPOIS DA DECISAO, e que nao estavam na lista apresentada:
+#   1. um banco de pares BEM CASADOS passa em PR-PAR com n pequeno; sob duas amostras isso era
+#      impossivel, e "banco piloto pequeno nao pode ser selado por PR-PAR" era protecao de
+#      cronograma que se perdeu. Se tiver de voltar, volta como CLAUSULA PROPRIA de n minimo,
+#      nunca como efeito colateral de um estimador impreciso;
+#   2. as duas clausulas passam a ler o MESMO delta, e a particao entre elas ficou mais nitida:
+#      o teto por par pega DISPERSAO, a clausula de banco pega DESLOCAMENTO sistematico. Ver
+#      `test_vies_SISTEMATICO_dentro_do_teto_por_par_so_a_clausula_de_BANCO_pega`.

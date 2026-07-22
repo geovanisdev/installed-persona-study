@@ -1,7 +1,14 @@
-"""O gate `par:dose_media` e' alcancavel? Medido, e a resposta depende do estimador.
+"""O gate `par:dose_media` e' alcancavel? Medido, e a resposta dependia do estimador.
 
-ESTE ARQUIVO FIXA UM DEFEITO CONHECIDO, nao um comportamento desejado.
-=====================================================================
+DECIDIDO EM 2026-07-22 PELO ARQUITETO: volta o bootstrap PAREADO.
+=================================================================
+Este arquivo guarda a medicao que produziu a decisao, e nao um defeito em aberto. Os dois
+primeiros testes rodam contra `_bootstrap_duas_amostras`, o estimador APOSENTADO, e existem
+para que a razao da troca continue verificavel depois de o codigo ter mudado. O ultimo verifica
+que o estimador EM USO e' mesmo o pareado — um `revert` silencioso quebra ali.
+
+O QUE ESTAVA ERRADO
+===================
 `MARGEM_DOSE_MEDIA_TOKENS = 1.5` tem procedencia escrita em `prod_validator.py`:
 
     "Com |delta_j| <= 3 o desvio-padrao de delta e' <= 3 e a semilargura do IC em 90 clusters
@@ -20,9 +27,10 @@ A CONSEQUENCIA, medida no slice v2 (dp entre clusters = 4,25 tokens nos dois bra
   n = 25 -> semilargura 2,35: **nenhum** valor de ponto satisfaz a margem. Nem zero.
   n = 90 -> semilargura 1,24: passa so' se |ponto| <= 0,26 token.
 
-Nao ha' conserto aqui. Trocar estimador ou margem e' decisao do Arquiteto, e o pre-registro
-ainda nao esta' selado — este e' o momento de a decisao aparecer, nao de ela ser tomada por
-quem quer que o proprio banco passe.
+A decisao foi apresentada com tres saidas e custos escritos (`runs/gemeos_v2/LEITURA.md`), e o
+Arquiteto escolheu a primeira. Um custo NAO estava na lista e apareceu ao implementar: sob o
+pareado, um banco de pares bem casados passa em PR-PAR com n pequeno, o que sob duas amostras
+era impossivel. Esta' registrado em `test_pares_bem_casados_passam_com_n_pequeno_e_isso_e_o_custo`.
 """
 
 from __future__ import annotations
@@ -107,6 +115,33 @@ def test_a_margem_ANUNCIADA_e_1_5_e_a_OPERANTE_e_um_sexto_disso():
 def test_em_25_clusters_nem_vies_zero_passa():
     """A n do slice v2. Aqui a semilargura (2,35) e' MAIOR que a margem inteira (1,5)."""
     assert not _cabe(25, vies=0.0)
+
+
+def test_o_estimador_EM_USO_e_o_pareado():
+    """A verificacao que pega um `revert` silencioso: `_acusa_par` usa qual dos dois?
+
+    Banco sintetico com pares casados a +-1 token e dispersao grande ENTRE clusters. Sob
+    pareado o IC e' estreito; sob duas amostras ele abriria alem da margem. O veredito
+    distingue os dois sem depender de nome de funcao nenhum.
+    """
+    import json
+    from pathlib import Path
+
+    from harness import prod_validator as PV
+    from tests.test_prod_validator import _banco_par, tok_palavras
+
+    cores = [json.loads((Path(__file__).resolve().parents[1] / "core" / f"{p}.core.json")
+                        .read_text(encoding="utf-8")) for p in ("leokadius", "shadowclock")]
+    tamanhos = [40 + (i % 17) for i in range(30)]        # dp entre clusters ~5 tokens
+    laudo, _ = PV._acusa_par(tok_palavras, _banco_par("leokadius", tamanhos),
+                             _banco_par("shadowclock", [t + (1 if i % 2 else -1)
+                                                        for i, t in enumerate(tamanhos)]),
+                             cores)
+    lo, hi = laudo["ci95_bootstrap"]
+    assert hi - lo < 1.0, (
+        f"IC de largura {hi - lo:.2f}: pares casados a +-1 token nao produzem isto sob o "
+        "estimador pareado. O estimador em uso voltou a ser o de duas amostras.")
+    assert laudo["veredito"] == "PARITARIO"
 
 
 def test_a_semilargura_prevista_pelo_comentario_e_a_do_PAREADO():

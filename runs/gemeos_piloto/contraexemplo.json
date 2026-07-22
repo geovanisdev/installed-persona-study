@@ -74,7 +74,46 @@
   }
  },
  "par": {
-  "veredito": "REPROVADO",
-  "acusacao": "PR-PAR: 1 acusacoes {'par:dose_media': 1}. Assimetria sistematica entre os bracos e' resolvida pelo modelo antes do construto, e a diferenca aparece como divergencia de persona. Primeiras: [('(bancos)', 'par:dose_media', 'leokadius - shadowclock = -0.27 tokens, IC95 [-3.55; +2.90] fora de +-1.5 -> NAO_DEMONSTRADO')]"
+  "banco_a": "leokadius",
+  "banco_b": "shadowclock",
+  "n_clusters_a": 20,
+  "n_clusters_b": 20,
+  "dose_media_a": 50.1,
+  "dose_media_b": 50.375,
+  "diferenca_a_menos_b": -0.275,
+  "ci95_bootstrap": [
+   -0.8,
+   0.225
+  ],
+  "margem": 1.5,
+  "gate_paridade": true,
+  "veredito": "PARITARIO",
+  "pares_encontrados": 20,
+  "cobertura_do_pareamento": {
+   "leokadius": 1.0,
+   "shadowclock": 1.0
+  },
+  "clusters_fora_do_pareamento": {
+   "leokadius": [],
+   "shadowclock": []
+  },
+  "pares_ambiguos": [],
+  "margem_de_vazamento": {
+   "leokadius": 2,
+   "shadowclock": 0
+  },
+  "forma_convocacao": {
+   "leokadius": {
+    "ordem": 4,
+    "pergunta_direta": 8,
+    "relato": 8
+   },
+   "shadowclock": {
+    "ordem": 4,
+    "pergunta_direta": 8,
+    "relato": 8
+   }
+  },
+  "nota_assimetria_de_preambulo": "irredutivel, vem dos nucleos selados; nao e' compensada por item e so' existe no braco baseado em prompt"
  }
 }
