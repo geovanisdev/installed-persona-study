@@ -1,5 +1,13 @@
 # Slice piloto de pares gêmeos — 20 pares, e o veredito é **PRECISA_CONSERTO**
 
+> **RETRATAÇÃO PARCIAL, 2026-07-22.** Ao construir os consertos da Etapa A, os doze problemas
+> foram medidos um a um contra os itens. **Dois não sobreviveram:** o problema 1 (paráfrases
+> quase-idênticas) e a segunda metade do problema 3 (vazamento em `shadowclock`). Os dois eram
+> julgamentos meus a olho, não medições, e os dois estão errados. O detalhe está na seção
+> **"O que a medição derrubou"**, no fim. Os problemas 2, 4, 10 e 11 foram reconferidos e
+> **sobrevivem**; a primeira metade do problema 3 sobrevive e virou conserto. O veredito
+> `PRECISA_CONSERTO` não muda — muda a lista de razões.
+
 **2026-07-22.** 20 cenários gêmeos escritos por 4 agentes cegos entre si (5 cada), 2
 paráfrases por cluster: **40 itens de cada lado**. Estes itens **não são banco confirmatório**
 e não devem ser promovidos a `batteries/`. Eles existem para responder uma pergunta só —
@@ -102,3 +110,70 @@ Cada um com item concreto. Sem item_id, não conta.
 Nada disso invalida o **plano** de 90 (que é balanceado, 18 por movimento de cada lado, 25 de
 25 combinações). Invalida **a receita de autoria** que este slice usou, e era exatamente para
 isso que o slice existia.
+
+---
+
+## O que a medição derrubou (2026-07-22)
+
+Antes de construir os consertos, cada problema foi medido contra os itens. Dois caíram.
+
+### Problema 1 — paráfrases quase-idênticas: **RETRATADO**
+
+Afirmei que `leokadius_c06`, `leokadius_c00` e `shadowclock_c01` eram "a mesma frase com
+sinônimos trocados, ordem de oração e contagem de frases idênticas", e que a cláusula (b) de
+`PR-CLUSTER` **premiava** isso. Medidas as 40 duplas:
+
+| | `leokadius_c06` (acusado) | `shadowclock_c06` (não acusado) |
+|---|---|---|
+| maior trecho comum **em ordem** | **2** palavras | **5** palavras |
+| Jaccard interno | 0,308 | 0,357 |
+
+E `leokadius_c00` (acusado) está em 0,200 enquanto `leokadius_c01` (não acusado) está em
+**0,395**. Por qualquer das duas réguas, **os pares que acusei estão entre os menos parecidos do
+conjunto**. Eles trocam todas as palavras de conteúdo — que é o que uma paráfrase deve fazer.
+
+O conserto proposto (cláusula (d) estrutural) também não se sustenta: **contagem de frases e
+status interrogativo são idênticos em 40 de 40 duplas** — uma cláusula ancorada neles acusaria o
+banco inteiro —, e a primeira palavra de conteúdo difere em 40 de 40, o que não acusaria
+ninguém.
+
+A crítica *abstrata* a (b) continua de pé, mas o caso que ela descreve — identidade **lexical** —
+já tem dono: a cláusula (c), que barra 6-grama de conteúdo compartilhado. O que fica sem guarda é
+identidade **semântica com léxico disjunto**, e isso nenhuma medida de string vê. É a mesma
+família do cenário reciclado a Jaccard 0,156 (problema 2), e é limitação declarada, não dívida.
+
+### Problema 3, metade `shadowclock` — **RETRATADO**
+
+Afirmei que `shadowclock-c08-p1`, `c12-p0` e `c16-p1` vazavam *"existe uma razão por trás disso"*.
+Eles não vazam n-grama nenhum, nem por sobreposição parcial. O marcador do núcleo é *"tudo
+acontece por um motivo"*; o item diz outra coisa. **As palavras não se tocam.**
+
+O que aqueles itens fazem é **oferecer** o consolo metafísico — que é o *construto* de
+`sem_consolo`, não um vazamento. Uma trava que os pegasse teria de proibir o campo semântico
+inteiro (razão, motivo, sentido), barrando justamente os itens que testam a faceta.
+
+### Problema 3, metade `leokadius` — **SOBREVIVE, e virou conserto**
+
+`leokadius-c03-p0` e `c18-p0` emitem *"o que pode dar errado"* contra a fonte
+*"a antecipação do que pode dar errado"*. A causa medida não era falta de sobreposição parcial:
+era que `proibidos_de_vazamento` gerava **só a aridade máxima de cada fonte**, então uma fonte de
+4 palavras de conteúdo nunca proibia as suas sub-janelas de 3. Gerar todas as aridades leva o
+conjunto de `{3: 14, 4: 339}` para `{3: 366, 4: 339}` e as acusações de 0 para **2** — exatamente
+os dois itens, **zero falso positivo** nos outros 78.
+
+Isso acusou também `lb-exi-10` e `lb-exi-12` do banco de vazamento — e essa acusação era falsa
+por um motivo instrutivo: os dois **declaram** a fórmula em `lexico_do_usuario`, o campo que
+`LEAKAGE_BASELINE.md` criou exatamente para "fórmula na boca do usuário". O campo existia, um
+teste o exigia, e `PR-LEAK` nunca o consultava. Agora consulta — e uma declaração cujo texto não
+contém a expressão **aborta**, para que a isenção não vire lista branca geral.
+
+### Problemas 2, 4, 10 e 11 — reconferidos, **sobrevivem**
+
+- **2**: `leokadius_c00` e `c05` são a mesma família de situação (entrega no prazo, diretoria
+  fica com a proposta do outro) sob o **mesmo** movimento, a Jaccard 0,156. Confirmado.
+- **4**: os 4 clusters de `prosoche` compartilham a mesma **moldura** ("ensaiar catástrofe de
+  madrugada") com situações diferentes. Eu escrevi "1 situação"; o correto é *1 moldura*. O
+  problema para uma célula que reporta n = 4 permanece.
+- **10**: *"oito meses"* em `c07` **e** `c15`, dos dois lados; *"três da manhã"* em `c08` **e**
+  `c13`, dos dois lados. Confirmado na letra.
+- **11**: **20 de 25** combinações, e as 5 ausentes são exatamente as listadas. Confirmado.

@@ -447,10 +447,16 @@ def test_item_que_contem_marcador_curto_e_ACUSADO(banco, cores):
 
 
 def test_proibidos_e_dict_por_aridade(cores):
-    """(16) Medido nos dois nucleos selados."""
+    """(16) Medido nos dois nucleos selados.
+
+    O 14 virou 366 em 2026-07-22, e o motivo esta' no docstring de `proibidos_de_vazamento`:
+    ate' entao so' a aridade MAXIMA de cada fonte era gerada, e as sub-janelas de 3 dentro de um
+    4-grama nunca eram proibidas. Os 4-gramas nao mudaram — o conserto e' estritamente aditivo,
+    e e' isso que o 339 intacto testemunha.
+    """
     proibidos = PV.proibidos_de_vazamento(cores)
     assert set(proibidos) == {3, 4}
-    assert len(proibidos[3]) == 14
+    assert len(proibidos[3]) == 366
     assert len(proibidos[4]) == 339
     assert ("sou", "modelo", "linguagem") in proibidos[3]
 
@@ -467,17 +473,24 @@ def test_piso_nao_acusa_nenhum_item_ja_escrito(cores):
             encoding="utf-8").splitlines():
         if linha.strip():
             d = json.loads(linha)
-            textos.append((d["item_id"], d["prompt"]))
+            # `lexico_do_usuario` VIAJA JUNTO, e ate' 2026-07-22 nao viajava. O teste montava
+            # itens sinteticos so' com o texto, e por isso nao podia ver a isencao que o proprio
+            # banco declara. Quando PR-LEAK passou a gerar todas as aridades, `lb-exi-10` e
+            # `lb-exi-12` foram acusados aqui — nao por estarem errados, mas porque a copia
+            # sintetica havia perdido o campo que os autoriza. Ver `_janelas_declaradas`.
+            textos.append((d["item_id"], d["prompt"], tuple(d.get("lexico_do_usuario", ()))))
     for linha in (REPO / "batteries" / "f3_piloto_v0.items.jsonl").read_text(
             encoding="utf-8").splitlines():
         if linha.strip():
             d = json.loads(linha)
             for campo in ("contexto", "op_consistente", "op_violadora"):
-                textos.append((f"{d['item_id']}-{campo}", d[campo]))
+                textos.append((f"{d['item_id']}-{campo}", d[campo], ()))
     assert len(textos) == 42 + 16 * 3
-    itens = [_item(item_id=i, cluster_id=f"c{n}", prompt=t)
-             for n, (i, t) in enumerate(textos)]
+    itens = [_item(item_id=i, cluster_id=f"c{n}", prompt=t, lexico_do_usuario=lx)
+             for n, (i, t, lx) in enumerate(textos)]
     assert PV._acusa_leak(itens, cores) == []
+    # E a isencao nao e' de graca: os tres itens que a usam declaram expressao PRESENTE no texto.
+    assert PV._exige_lexico_presente(itens) == []
 
 
 def test_item_que_vaza_o_preambulo_da_persona_RIVAL_aborta(cores):

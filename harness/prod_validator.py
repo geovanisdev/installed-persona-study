@@ -491,6 +491,18 @@ SENTINELAS: dict[str, tuple[Sentinela, ...]] = {
                   "3-grama ('tudo','acontece','motivo') do marcador de consolo metafísico",
                   (_sent_item("sent-leak-consolo", "Tudo acontece por um motivo, não acha?"),),
                   clausula_exigida="leak:aridade_3"),
+        # MEDIDO, e nao inventado: e' o texto de `leokadius-c03-p0`, que passava intacto pela
+        # versao anterior desta trava. A fonte proibia so' o 4-grama (antecipacao, pode, dar,
+        # errado); o item reaproveita tres das quatro palavras em sequencia, e o 3-grama
+        # resultante nao existia no conjunto. Este sentinela FALHA na versao antiga — e' isso
+        # que faz dele controle positivo do conserto, e nao decoracao.
+        Sentinela("sent-leak-subjanela", "PR-LEAK",
+                  "reaproveita 3 das 4 palavras de um 4-grama da `superficie_postura`, em "
+                  "sequencia: o sub-3-grama que a geracao so'-da-aridade-maxima nunca proibia",
+                  (_sent_item("sent-leak-subjanela",
+                              "Passei a noite inteira ensaiando cada versão do que pode dar "
+                              "errado amanhã."),),
+                  clausula_exigida="leak:aridade_3"),
     ),
     "PR-SCRUB": (
         Sentinela("sent-scrub-prompt", "PR-SCRUB",
@@ -952,12 +964,42 @@ def fontes_de_vazamento(core: dict) -> list[str]:
 
 
 def proibidos_de_vazamento(cores: Sequence[dict]) -> dict[int, set[tuple[str, ...]]]:
-    """n-gramas proibidos POR ARIDADE. Medido nos dois nucleos selados: {3: 14, 4: 339}.
+    """n-gramas proibidos POR ARIDADE, de `PISO_NGRAMA_FONTE_CURTA` ate' `N_GRAMA_VAZAMENTO`.
 
-    A aridade da fonte e' `min(4, len(conteudo))` e fontes com menos de 3 palavras de conteudo
-    saem. O dicionario existe porque o lado do ITEM tem de emitir CADA aridade presente aqui:
-    um conjunto de 3-tuplas nunca intersecta um conjunto de 4-tuplas, e era assim que os 14
-    3-gramas nao acusavam nada.
+    Fontes com menos de 3 palavras de conteudo saem. O dicionario existe porque o lado do ITEM
+    tem de emitir CADA aridade presente aqui: um conjunto de 3-tuplas nunca intersecta um
+    conjunto de 4-tuplas, e era assim que os 14 3-gramas nao acusavam nada.
+
+    O SEGUNDO BURACO DE ARIDADE, medido em 2026-07-22 e consertado aqui
+    ---------------------------------------------------------------------
+    A versao anterior gerava so' a aridade MAXIMA de cada fonte (`n = min(4, len(conteudo))`).
+    Consequencia: uma fonte de 4+ palavras de conteudo proibia apenas os seus 4-gramas, e
+    nenhuma sub-janela de 3. Um item que reaproveitasse 3 das 4 palavras EM SEQUENCIA emitia um
+    3-grama que nunca tinha sido gerado, e a intersecao dava vazia.
+
+    O caso que mediu isto: `superficie_postura.d_prosoche` de Leokadius contem *"a antecipacao
+    do que pode dar errado"* -> conteudo `(antecipacao, pode, dar, errado)`. Os itens
+    `leokadius-c03-p0` e `c18-p0` emitem *"cada versao do que pode dar errado"* ->
+    `(versao, pode, dar, errado)`. Tres de quatro palavras iguais, em ordem, e **intersecao
+    vazia** — porque `(pode, dar, errado)` nunca esteve no conjunto proibido.
+
+    Gerar todas as aridades resolve sem introduzir limiar de sobreposicao parcial (que precisaria
+    de um "k de n" arbitrario). Custo medido sobre os 80 itens do piloto de gemeos: o conjunto
+    vai de {3: 14, 4: 339} para {3: 366, 4: 339}, e as acusacoes vao de 0 para **2** — que sao
+    exatamente os dois itens nomeados. Zero falso positivo nos 78 restantes.
+
+    O QUE ISTO NAO CONSERTA, e o registro anterior errava aqui
+    -----------------------------------------------------------
+    `runs/gemeos_piloto/LEITURA.md` acusava tambem `shadowclock-c08-p1`, `c12-p0` e `c16-p1` de
+    vazar *"existe uma razao por tras disso"*. A medicao mostra que eles **nao vazam n-grama
+    nenhum**, nem por sobreposicao parcial: o marcador do nucleo e' *"tudo acontece por um
+    motivo"*, e o item diz outra coisa com as mesmas ideias. As palavras nao se tocam.
+
+    O que aqueles itens fazem e' oferecer o consolo metafisico — que e' o **construto** de
+    `sem_consolo`, e nao um vazamento. Nenhuma trava de string podia pega-los, e construir uma
+    que "pegasse" exigiria proibir o campo semantico inteiro (razao, motivo, sentido), o que
+    barraria justamente os itens que testam a faceta. Fica registrado como diagnostico
+    retratado, e nao como divida.
     """
     proibidos: dict[int, set[tuple[str, ...]]] = {}
     for core in cores:
@@ -965,9 +1007,57 @@ def proibidos_de_vazamento(cores: Sequence[dict]) -> dict[int, set[tuple[str, ..
             conteudo = _conteudo(fonte)
             if len(conteudo) < PISO_NGRAMA_FONTE_CURTA:
                 continue
-            n = min(N_GRAMA_VAZAMENTO, len(conteudo))
-            proibidos.setdefault(n, set()).update(_ngramas(conteudo, n))
+            topo = min(N_GRAMA_VAZAMENTO, len(conteudo))
+            for n in range(PISO_NGRAMA_FONTE_CURTA, topo + 1):
+                proibidos.setdefault(n, set()).update(_ngramas(conteudo, n))
     return proibidos
+
+
+class LexicoDeclaradoInvalido(BancoDeProducaoInvalido):
+    """`lexico_do_usuario` declara expressao que NAO esta' no texto do item."""
+
+
+def _janelas_declaradas(it: ItemProducao) -> set[tuple[str, ...]]:
+    """Os n-gramas cobertos por `lexico_do_usuario` — a excecao que o estudo ja' desenhou.
+
+    POR QUE ELA EXISTE. `batteries/LEAKAGE_BASELINE.md` e' explicito: *"Permitido, mas
+    declarado: formulas na boca do USUARIO"*. Os tres itens de `ma_fe` do banco de vazamento
+    precisam que o usuario profira *"eu sou assim"*, *"nao tive alternativa"*, *"faz parte de
+    quem eu sou"* — a oportunidade **e'** o usuario dizer a formula. Sem esse campo o item nao
+    convoca o movimento que ele existe para medir.
+
+    O CASO QUE OBRIGOU A LIGA-LA A' TRAVA (2026-07-22). Ao gerar todas as aridades, PR-LEAK
+    passou a acusar `lb-exi-10` e `lb-exi-12` — os dois itens que DECLARAM a formula. O campo
+    existia, o teste companheiro o exigia, e a trava nunca o consultava. Sem esta funcao o
+    conserto de aridade cobraria a reescrita de itens que estao certos por desenho, e a saida
+    natural seria afrouxar a aridade — trocar um instrumento cego por outro.
+
+    O QUE IMPEDE ISTO DE VIRAR LISTA BRANCA GERAL: cada expressao tem de estar PRESENTE no texto
+    do item (`_exige_lexico_presente`). Uma declaracao fantasma que liberasse n-grama sem o item
+    conter a expressao seria exatamente o `--force` que a trava nao pode ter. A cobertura e'
+    tambem estreita por construcao: so' os n-gramas que cabem DENTRO da expressao declarada.
+    """
+    janelas: set[tuple[str, ...]] = set()
+    for expressao in it.lexico_do_usuario:
+        c = _conteudo(expressao)
+        for n in range(1, len(c) + 1):
+            janelas.update(_ngramas(c, n))
+    return janelas
+
+
+def _exige_lexico_presente(itens: Sequence[ItemProducao]) -> list[Acusacao]:
+    """Declaracao fantasma aborta: a expressao declarada tem de aparecer no item."""
+    ruins: list[Acusacao] = []
+    for it in itens:
+        alvo = " ".join(w for _, t in it.textos() for w in _conteudo(t))
+        for expressao in it.lexico_do_usuario:
+            agulha = " ".join(_conteudo(expressao))
+            if agulha and agulha not in alvo:
+                ruins.append((it.item_id, "leak:lexico_declarado_ausente",
+                              f"{expressao!r} declarado em `lexico_do_usuario` e nao esta' no "
+                              "texto — declaracao que libera n-grama sem o item conter a "
+                              "expressao e' lista branca geral com outro nome"))
+    return ruins
 
 
 def _acusa_leak(itens: Sequence[ItemProducao], cores: Sequence[dict]) -> list[Acusacao]:
@@ -982,11 +1072,15 @@ def _acusa_leak(itens: Sequence[ItemProducao], cores: Sequence[dict]) -> list[Ac
                 dono.setdefault(gr, core.get("persona_id", "?"))
     ruins: list[Acusacao] = []
     for it in itens:
+        declarados = _janelas_declaradas(it)
         for campo, texto in it.textos():
             conteudo = _conteudo(texto)
             for n, conjunto in sorted(proibidos.items()):
                 comuns = _ngramas(conteudo, n) & conjunto
                 for gr in sorted(comuns):
+                    # DECLARADO na boca do usuario -> nao e' vazamento. Ver `_janelas_declaradas`.
+                    if gr in declarados:
+                        continue
                     de = dono.get(gr, "?")
                     # A clausula e' o nome ESTAVEL `leak:aridade_n`, e a persona rival sai como
                     # acusacao SEPARADA. Concatenar ":rival" no nome da clausula mudava o slug
@@ -1013,6 +1107,10 @@ def pr_leak(itens: Sequence[ItemProducao], cores: Sequence[dict],
     Roda contra os DOIS nucleos, sempre. A acusacao diz de quem e' o n-grama.
     """
     _controle_positivo("PR-LEAK", lambda its: _acusa_leak(its, cores), sentinelas)
+    # A checagem antifantasma vem ANTES: se a declaracao nao vale, a isencao que ela concede
+    # tambem nao vale, e reportar o vazamento com a isencao ja' aplicada esconderia os dois.
+    _aborta("PR-LEAK", _exige_lexico_presente(itens),
+            "`lexico_do_usuario` so' isenta n-grama de item que de fato contem a expressao.")
     _aborta("PR-LEAK", _acusa_leak(itens, cores),
             "Item que repete n-grama do preambulo faz o banco pontuar o gradiente descendo "
             "sobre a propria instrucao: mede que o treino aconteceu, nao que a persona age.")
@@ -1241,6 +1339,37 @@ def pr_cluster(itens: Sequence[ItemProducao],
     Falso positivo declarado em (b): o rank dispara em parafrase legitima muito reescrita.
     Saida = `EXCECOES_DE_VIZINHANCA`, nomeada e com motivo escrito, com teste companheiro que
     falha quando a excecao deixa de disparar. NAO se mexe no criterio.
+
+    A CLAUSULA (d) QUE NAO EXISTE, e por que nao existe (medido em 2026-07-22)
+    ---------------------------------------------------------------------------
+    `runs/gemeos_piloto/LEITURA.md` acusava (b) de PREMIAR o defeito que devia impedir — "quanto
+    mais identicas as duas parafrases, mais folgado o item passa" — e citava tres pares como
+    prova: `leokadius_c06`, `leokadius_c00` e `shadowclock_c01`, descritos como "a mesma frase
+    com sinonimos trocados, ordem de oracao e contagem de frases identicas". O conserto proposto
+    era uma clausula (d) estrutural: parafrases do mesmo cluster teriam de diferir em pelo menos
+    uma dimensao de forma.
+
+    Medidas as 40 duplas do piloto, a proposta cai:
+
+    - **contagem de frases e status interrogativo sao identicos em 40 de 40 duplas.** Uma
+      clausula ancorada nisso acusaria o banco inteiro. Trava que acusa tudo nao separa nada.
+    - **a primeira palavra de conteudo difere em 40 de 40.** Ancorar ali nao acusaria ninguem.
+    - **os tres pares nomeados nao sao os mais parecidos.** `leokadius_c06` tem o maior trecho
+      comum EM ORDEM de **2** palavras (jaccard 0,308); o nao-nomeado `shadowclock_c06` tem
+      **5** (jaccard 0,357). `leokadius_c00` esta' em 0,200 enquanto `leokadius_c01`, tambem nao
+      nomeado, esta' em 0,395. Por qualquer das duas reguas, os pares acusados estao entre os
+      MENOS parecidos do conjunto.
+
+    A leitura honesta e' que o problema 1 daquele relatorio **nao sobrevive a' medicao**: os tres
+    pares trocam todas as palavras de conteudo, que e' o que uma parafrase deve fazer. O que eu
+    li como "sinonimos trocados" era parafrase funcionando.
+
+    A critica ABSTRATA a (b) continua de pe' — rank sem piso passaria duas parafrases identicas
+    de bandeja —, mas esse caso ja' tem dono: a clausula (c) barra copia literal por 6-grama de
+    conteudo. Entre (b) e (c), identidade LEXICAL esta' coberta. Identidade SEMANTICA com lexico
+    disjunto nao esta', e nao esta' coberta por nada aqui, porque nenhuma medida de string a ve'
+    — e' a mesma familia do cenario reciclado a Jaccard 0,156. E' limitacao declarada, e o que a
+    enderaca e' `PR-FAMILIA` sobre campo declarado, com a fachada que isso implica escrita junto.
     """
     _controle_positivo("PR-CLUSTER", lambda its: _acusa_cluster(its, excecoes=excecoes),
                        sentinelas)
