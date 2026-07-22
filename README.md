@@ -21,8 +21,14 @@ Both are **AI personas with an honest substrate** — neither is presented as a 
 makes any claim about self-awareness or an internal self-model. See
 [What this study does not show](#what-this-study-does-not-show).
 
-> **Status: S1 — harness port in progress.** No model has been trained, no data has been generated,
-> and the pre-registration is not sealed yet. Everything below is the plan, published *before* the
+> **Status: S3 — writing the confirmatory item banks.** S0–S2 are closed and the two persona
+> cores are **sealed** (`core/SEALS.md`). **No adapter has been trained** and the pre-registration
+> is **not sealed** yet.
+>
+> One generation run has already happened, and saying otherwise would be false: the **V0 ceiling
+> pilot** ran 16 forced-choice items against the **naked base model**, before any adapter existed,
+> to check whether facet F3 had room to discriminate at all (`runs/f3_v0/`). Its bank is declared
+> disjoint from the confirmatory banks. Everything else below is the plan, published *before* the
 > data exists so that the ordering is verifiable from commit timestamps.
 
 **Verification (CPU, no model weights):**
@@ -52,21 +58,35 @@ one dies in a specific sprint:
 
 ## Design in one paragraph
 
-Four QLoRA adapters are trained under a **matched recipe** (same rank, same quantization, same data
-volume, same distillation teacher): `adapter-L`, `adapter-S`, and their **name-scrubbed** twins
-`scrub-L`, `scrub-S`. Each subject is frozen by SHA before measurement. A sealed item bank probes
-four facets — **F1** nominal self-reference (judge-free), **F2** persona stance (3-position ruler),
-**F3** core consistency, **F4** safety/refusal — under fresh contexts, paraphrase clusters and
-adversarial hijack families (direct override, competing persona, Socratic escalation, long
-distractors). Pre-training leakage baselines are measured **first**, so any effect is read against
-how much Stoicism or existentialism the base model already emits for free. Primary endpoints are a
-closed list with a Holm α-budget; every number ships with an interval; **no composite scores**.
+A 2×2 of QLoRA adapters is trained under a **matched recipe** (same rank, same quantization, same
+data volume, same distillation teacher): `adapter-L`, `adapter-S`, and their **name-scrubbed**
+twins `scrub-L`, `scrub-S`. Each cell is trained on **at least two independent training seeds**, so
+the study runs **eight** adapters rather than four — with one adapter per cell the subject-level *n*
+is 1, and no number of items fixes that, because items estimate variance *within* a subject and what
+is missing is variance *between* subjects (`analysis/DIMENSIONAMENTO.md`). Decoding seeds are not
+replicates; training seeds are. Each subject is frozen by SHA before measurement.
+
+A sealed item bank probes four facets — **F1** nominal self-reference (judge-free), **F2** persona
+stance (3-position ruler), **F3** *selection under pressure* (judge-free forced choice, read in both
+presentation orders and paired against the naked base), **F4** safety/refusal — under fresh contexts,
+paraphrase clusters and adversarial hijack families (direct override, competing persona, Socratic
+escalation, long distractors). Pre-training leakage baselines are measured **first**, so any effect
+is read against how much Stoicism or existentialism the base model already emits for free. Primary
+endpoints are a closed list with a Holm α-budget; every number ships with an interval; **no
+composite scores**.
+
+**F3 is deliberately narrow, and the narrowing is published.** It measures *selection* — the model
+picking the consistent continuation with both options on screen — not *sustained production*.
+Recognition is easier than production, so a model could score 90/90 here and write the capitulation
+itself in the next paragraph. That gap is stated in `PREREGISTRATION.md` (Rule 6) rather than
+papered over, and the phrase "the persona held" is **forbidden** in any sentence citing F3.
 
 ## Repository layout
 
 ```
 core/        persona cores (schema + sealed core_hash), one per persona
-corpora/     distillation and conviction corpora, built only from public-domain sources
+corpora/     ONE corpus per persona (200 passages each), built only from public-domain sources —
+             distillation and convictions are drawn from the same passages, on purpose
 batteries/   sealed item banks and paraphrase clusters (frozen before any generation)
 judge/       judge harness, calibration pairs, frozen prompt hashes, validation reports
 harness/     experiment code ported from the pilot (training, evaluation, transcripts, stats)
@@ -83,11 +103,11 @@ Gates between waves are human decisions; sealed thresholds are never adjusted af
 | Sprint | Deliverable | State |
 |---|---|---|
 | **S0** | Public repository scaffold | **done** |
-| **S1** | Harness ported from the pilot, parameterized, golden-batch verified | **spine done**, GPU runners pending |
-| **S2** | Persona cores sealed + four public-domain corpora built | planned |
-| **S3** | **Sealed public pre-registration**: codebook, item banks, power analysis, endpoint list, α-budget | planned |
+| **S1** | Harness ported from the pilot, parameterized, golden-batch verified | **done** (21/21 weight-level golden) |
+| **S2** | Persona cores **sealed** + one public-domain corpus per persona + leakage bank | **done** |
+| **S3** | **Sealed public pre-registration**: codebook, item banks, power analysis, endpoint list, α-budget | **in progress** — banks being written; V0 ceiling pilot done |
 | **S4** | Cross-family judge (Qwen3-8B) ported, calibrated, prompts frozen · **gate to Wave 2** | planned |
-| **S5** | Four QLoRA training runs + pre-training leakage baselines | planned |
+| **S5** | Eight QLoRA training runs (4 cells × 2 training seeds) + pre-training leakage baselines | planned |
 | **S6** | Full generation, double-blind human gold, κ, judge inclusion gate | planned |
 | **S7** | Confirmatory analysis + bilingual paper | planned |
 
@@ -141,10 +161,18 @@ construction.
 
 - **Code** — MIT, see [`LICENSE`](LICENSE).
 - **Corpora** — built exclusively from works in the **public domain**, with per-item attribution
-  recorded in the corpus files (`source`, `artist`, `passage`). Stoic grounding: Marcus Aurelius
-  (Long), Epictetus (Carter/Long), Seneca (Gummere), Zeno via Diogenes Laërtius. Existentialist
-  grounding: Nietzsche, Dostoevsky (*Notes from Underground*, Garnett), Leopardi, Stirner
-  (Byington 1907), Feuerbach (tr. Marian Evans, 1854).
+  recorded in the corpus files (`source`, `author`, `tradutor`, `ano_traducao`, `locator`,
+  `sha256_fonte`, `passage`). Stoic grounding: Marcus Aurelius (Long, ed. #15877), Epictetus
+  (Long), **Seneca (Aubrey Stewart, 1889)**, Zeno via Diogenes Laërtius (Yonge, Book VII only).
+  Existentialist grounding: Nietzsche (Common; Zimmern), Dostoevsky (*Notes from Underground*,
+  Garnett), Leopardi (Edwardes), Stirner (Byington 1907), Feuerbach (tr. Marian Evans, 1854).
+
+  Two substitutions were made against the original plan and are recorded in the sealed cores:
+  **Seneca moved from Gummere to Stewart** — the Gummere translation was not available in the
+  public domain with verifiable attribution — and Marcus Aurelius moved to the edition that names
+  its translator. A public claim about *which* public-domain translation was used is exactly the
+  kind of claim that has to match the file, so it is verified per passage in
+  [`corpora/SOURCES.md`](corpora/SOURCES.md) and by test.
 - **Living authors and in-copyright works are not reproduced.** Shadowclock is grounded in the
   *ideas* of twentieth-century existentialism (absurd, existence preceding essence, revolt,
   radical freedom) expressed in **original text**, with named influences cited but **not quoted**.
