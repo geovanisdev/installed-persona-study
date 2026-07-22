@@ -9,7 +9,10 @@ module.
 > model load/unload with a pinned-revision guard, and generation primitives**. Fidelity is proven
 > against the origin harness both in CPU (hashes, ruler decisions) and with weights loaded
 > (identical prompt token ids, identical greedy continuations, identical teacher-forced log-probs).
-> The experiment runners themselves are not ported yet. Consolidated record — including what
+> **Runners:** `runners/run_f3_v0.py` exists and has been executed (the V0 ceiling pilot against
+> the naked base). The remaining experiment runners are not ported — deliberately, because their
+> logic is decided by the pre-registration, and porting them earlier would have meant porting
+> decisions that had not been made yet. Consolidated record — including what
 > changed, the dependencies missing from the original port list, and the open decisions — in
 > [`PORT_LOG.md`](PORT_LOG.md); fidelity report in [`goldens/GOLDEN_BATCH.md`](goldens/GOLDEN_BATCH.md).
 

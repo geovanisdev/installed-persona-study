@@ -3,12 +3,15 @@
 Nothing here may be written against real data before the corresponding artifacts in `batteries/`
 and `judge/` are committed. The commit history is the audit trail for that ordering.
 
-Planned contents:
+Contents:
 
 ```
-power.py               S3 — new module, scipy only (no statsmodels dependency)
-POWER.md               S3 — the n fixed per cell, and the interval width it buys
-ENDPOINTS.md           S3 — closed list of primary endpoints + Holm alpha-budget per family
+power.py               DONE — exact power, scipy only (no statsmodels dependency). The power is
+                       computed over the SAME EVENT the gate decides (lower bound of the
+                       Clopper-Pearson interval above the threshold), not over a nearby one.
+DIMENSIONAMENTO.md     DONE — the n per bank and the interval width it buys. Named this rather
+                       than POWER.md because it reports a decision, not a function.
+ENDPOINTS.md           S3, pending — closed list of primary endpoints + Holm alpha-budget per family
 confirmatory.py        S7 — exact intervals, Fisher, cluster bootstrap over item families
 FIGURES/               S7 — figures, each traceable to the run that produced it
 ```
