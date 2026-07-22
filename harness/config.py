@@ -70,6 +70,20 @@ def apply_hf_env() -> None:
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 
+# --- Tokenizador ------------------------------------------------------------
+# Caminho de ARQUIVO do `tokenizer.json`, e nao um id de modelo, porque o ambiente de
+# verificacao em CPU nao tem `transformers`: `tokenizers.Tokenizer.from_file` le este
+# arquivo sozinho, offline e sem tocar nos pesos.
+#
+# O default aponta para o snapshot que `refs/main` resolvia em 2026-07-22. Ele e' apenas
+# uma CONVENIENCIA de maquina — a trava de verdade e' o sha256 do arquivo, conferido em
+# `harness/tokenizacao.py`. Revisao e' ponteiro mutavel; hash nao. Ver o docstring de la'.
+TOKENIZER_PATH = Path(os.environ.get(
+    "IPS_TOKENIZER",
+    r"G:\hf_cache\hub\models--google--gemma-4-E4B-it\snapshots"
+    r"\a4c2d58be94dda072b918d9db64ee85c8ed34e3f\tokenizer.json",
+))
+
 # --- Semente ----------------------------------------------------------------
 # Semente de CONSTRUCAO (split/embaralhamento das baterias). Nao confundir com semente
 # de DECODIFICACAO: reamostrar a decodificacao de um mesmo sujeito mede variancia de
