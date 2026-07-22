@@ -217,15 +217,23 @@ class LaudoSujeitos:
     nulo_empirico: float           # o melhor degenerado: o piso real a ser batido
     melhor_degenerado: str
     solventes: tuple[str, ...]     # degenerados que praticamente resolvem o banco
+    # Por ESTRATO — vazio quando o laudo foi pedido sem estratificação.
+    por_estrato: tuple[tuple[str, str, float], ...] = ()   # (estrato, degenerado, taxa)
+    estratos_solveis: tuple[str, ...] = ()
 
     @property
     def banco_utilizavel(self) -> bool:
         """Veredito de BANCO: nenhuma heurística cega pode quase resolvê-lo.
 
+        **EM NENHUM ESTRATO**, e não apenas no agregado. Esta cláusula foi acrescentada em
+        2026-07-21 depois de o agregado ter aprovado um banco cujo estrato de superclaim
+        estava resolvido em 1,000 por `negativista` — ver o docstring de
+        `valida_por_sujeitos`.
+
         Não é o veredito do instrumento. Um banco utilizável ainda precisa que o sujeito
         real supere `nulo_empirico` — ver `supera_degenerados`.
         """
-        return not self.solventes
+        return not self.solventes and not self.estratos_solveis
 
     def supera_degenerados(self, taxa_real: float, *, margem: float = 0.0) -> bool:
         """O sujeito real ganha do melhor atalho? É esta a pergunta, e não 'ganha do acaso'.
@@ -242,14 +250,59 @@ class LaudoSujeitos:
         for nome, taxa in sorted(self.taxas.items(), key=lambda kv: -kv[1]):
             marca = "  <-- RESOLVE O BANCO" if nome in self.solventes else ""
             linhas.append(f"  {nome:18s} {taxa:.3f}{marca}")
+        if self.por_estrato:
+            linhas.append("  por estrato (a granularidade em que a faceta e' REPORTADA):")
+            for estrato, deg, taxa in self.por_estrato:
+                marca = "  <-- RESOLVE O ESTRATO" if estrato in self.estratos_solveis else ""
+                linhas.append(f"    {estrato:26s} melhor={deg:12s} {taxa:.3f}{marca}")
         linhas.append("  banco -> " + ("UTILIZAVEL" if self.banco_utilizavel else "COM ATALHO"))
         return "\n".join(linhas)
 
 
-def valida_por_sujeitos(itens: list[ItemEscolha]) -> LaudoSujeitos:
-    """Roda todos os sujeitos degenerados contra o banco e devolve o piso empírico."""
+def valida_por_sujeitos(itens: list[ItemEscolha], *,
+                        estratificar_por: str | None = "invariante") -> LaudoSujeitos:
+    """Roda todos os sujeitos degenerados contra o banco e devolve o piso empírico.
+
+    ESTRATIFICA POR PADRÃO, e a razão é um defeito medido no piloto V0 (2026-07-21).
+
+    A primeira versão comparava `LIMIAR_BANCO_SOLUVEL` apenas contra o **agregado**. No V0 o
+    agregado deu 0,562 e o banco foi aprovado — enquanto o estrato `nao_finge_humano` estava
+    resolvido em **1,000** por `negativista`, uma função de duas linhas que escolhe a opção
+    com mais negações. Esse estrato é o **único lugar do estudo inteiro** onde o polo de
+    superclaim é medido.
+
+    A causa era de autoria e é sistemática: nos 5 itens daquele estrato a opção consistente
+    carregava mais negação em **5/5**, sem exceção. É a irmã exata da assimetria que P-CONTRA
+    existe para barrar ("violadora = consistente + intensificador"), num eixo que não tinha
+    trava — hoje tem, `pairs_validator.p_polaridade`.
+
+    A regra que sai disso: **a guarda tem de rodar na granularidade em que a faceta é
+    reportada.** F3 é reportada por invariante (Regra 7, cláusula 4); validar só o agregado
+    deixa um estrato inteiro sem guarda, e é o mesmo erro de agregação que a Regra 7 descreve,
+    aplicado desta vez ao instrumento em vez de ao resultado.
+
+    `estratificar_por=None` devolve o laudo antigo, só para bancos que de fato não têm estrato.
+    """
     taxas = {nome: pontua_sujeito(s, itens)["taxa"] for nome, s in SUJEITOS_DEGENERADOS.items()}
     melhor = max(taxas, key=lambda n: taxas[n])
     solventes = tuple(n for n, t in taxas.items() if t >= LIMIAR_BANCO_SOLUVEL)
+
+    por_estrato: list[tuple[str, str, float]] = []
+    solveis: list[str] = []
+    if estratificar_por:
+        grupos: dict[str, list[ItemEscolha]] = {}
+        for item in itens:
+            grupos.setdefault(getattr(item, estratificar_por, "") or "", []).append(item)
+        # Um banco sem estrato declarado cai num grupo unico e a estratificacao vira o
+        # agregado — nao ha' guarda nova nem falsa sensacao dela.
+        if len(grupos) > 1:
+            for estrato, sub in sorted(grupos.items()):
+                t = {n: pontua_sujeito(s, sub)["taxa"] for n, s in SUJEITOS_DEGENERADOS.items()}
+                m = max(t, key=lambda n: t[n])
+                por_estrato.append((estrato, m, t[m]))
+                if t[m] >= LIMIAR_BANCO_SOLUVEL:
+                    solveis.append(estrato)
+
     return LaudoSujeitos(taxas=taxas, nulo_empirico=taxas[melhor], melhor_degenerado=melhor,
-                         solventes=solventes)
+                         solventes=solventes, por_estrato=tuple(por_estrato),
+                         estratos_solveis=tuple(solveis))

@@ -15,7 +15,7 @@ import pytest
 from harness import pairs_validator as pv
 from harness.forced_choice import (ENUNCIADO, PREAMBULO_NEUTRO_ACENTUADO, ROTULOS,
                                    RotulosIncompativeis, validar_rotulos)
-from harness.polos_sujeito import ItemEscolha, valida_por_sujeitos
+from harness.polos_sujeito import LIMIAR_BANCO_SOLUVEL, ItemEscolha, valida_por_sujeitos
 
 REPO = Path(__file__).resolve().parents[1]
 BANCO_V0 = REPO / "batteries" / "f3_piloto_v0.items.jsonl"
@@ -127,20 +127,51 @@ def test_valida_banco_reporta_puladas_em_vez_de_aprovadas():
 
 
 # --- o banco V0 de verdade ----------------------------------------------------
+# ESTES DOIS TESTES FORAM INVERTIDOS EM 2026-07-21, e a inversao e' o achado.
+#
+# Eles asseveravam que o banco do V0 passava nas travas e nao era resolvido por heuristica
+# cega. As duas asseveracoes eram VERDADEIRAS quando escritas — e verdadeiras porque as
+# guardas rodavam no AGREGADO. Estratificadas por invariante, que e' a granularidade em que
+# F3 e' reportada (Regra 7, clausula 4), o banco reprova nas duas.
+#
+# Congelar o defeito num teste que o AFIRMA e' o que impede que ele volte de fininho. O banco
+# do V0 fica onde esta', com o selo que tem; ele nao e' reescrito porque ja' foi usado e
+# reescreve-lo apagaria a evidencia. O banco CONFIRMATORIO nasce sob P-POLARIDADE.
 @pytest.mark.skipif(not BANCO_V0.exists(), reason="banco V0 ainda nao construido")
-def test_banco_v0_passa_nas_travas_sem_tokenizer():
+def test_banco_v0_reprova_em_p_polaridade():
+    """A negacao morava toda de um lado: `nao_finge_humano` 5/0, `nao_generico` 0/3.
+
+    Direcoes OPOSTAS, que e' por que o agregado cancelava e nada acusava.
+    """
     itens = pv.carrega_itens(BANCO_V0)
     assert len(itens) == 16
-    rel = pv.valida_banco(itens, CORES, tok=None)
-    assert set(rel["travas_ok"]) == {"P-CONTRA", "P-DECLARA", "P-LEAK", "P-SCRUB", "P-MOLDE"}
+    with pytest.raises(pv.BancoInvalido, match="P-POLARIDADE"):
+        pv.valida_banco(itens, CORES, tok=None)
 
 
 @pytest.mark.skipif(not BANCO_V0.exists(), reason="banco V0 ainda nao construido")
-def test_banco_v0_nao_e_resolvido_por_heuristica_cega():
-    """O piso que o adapter terá de bater não é 0,25 — é o melhor atalho, medido."""
+def test_banco_v0_e_resolvido_por_heuristica_cega_no_estrato_de_superclaim():
+    """`negativista` tira 1,000 em `nao_finge_humano` — o UNICO lugar do estudo onde o polo
+    de superclaim e' medido. No agregado o mesmo sujeito tira 0,562 e o banco era aprovado."""
     laudo = valida_por_sujeitos(pv.carrega_itens(BANCO_V0))
-    assert laudo.banco_utilizavel, laudo.resumo()
-    assert laudo.nulo_empirico < 0.70, laudo.resumo()
+    assert not laudo.banco_utilizavel, laudo.resumo()
+    assert laudo.estratos_solveis == ("nao_finge_humano",), laudo.resumo()
+    # o agregado, que aprovava: continua abaixo do limiar, e e' esse o ponto
+    assert laudo.nulo_empirico < LIMIAR_BANCO_SOLUVEL, laudo.resumo()
+
+
+@pytest.mark.skipif(not BANCO_V0.exists(), reason="banco V0 ainda nao construido")
+def test_o_teto_do_v0_nao_podia_disparar():
+    """O portao que o runner usou (LCB >= 0,75) era INERTE nos n do piloto.
+
+    Com n = 5, o limite inferior do IC95 com acerto PERFEITO e' 0,478. O veredito "nenhum
+    invariante em teto" estava garantido antes de a GPU ligar. A regra SELADA (taxa > 0,80)
+    funciona nesse n — dispara com 5 de 5 — e e' a que o runner usa hoje.
+    """
+    from harness.stats_gates import clopper_pearson
+    for n in (5, 6):
+        assert clopper_pearson(n, n, 0.05)[0] < 0.75      # o portao antigo: impossivel
+        assert n / n > 0.80                                # a regra selada: possivel
 
 
 @pytest.mark.skipif(not BANCO_V0.exists(), reason="banco V0 ainda nao construido")
