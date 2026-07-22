@@ -1,0 +1,80 @@
+{
+ "carater": "DIAGNOSTICO",
+ "nao_sela": true,
+ "modo": "diagnostico",
+ "cores": {
+  "leokadius": "67d4819533f2e3609dcf5766fe1e7677ed2a6ce84ebc1cc5603b1a63135c7202",
+  "shadowclock": "ae6d8f57ed57021532f9cd43649768753bb75733f597838aaeaabfb6a6c99c65"
+ },
+ "tokenizer": "carregado",
+ "familias_anotadas": {
+  "arquivo": "runs/gemeos_piloto/familias_declaradas.json",
+  "sha256": "5ddfd1c929c6ab0fd01184abb86939ab7ee0036ac81801f3da2d2d6302d166fd",
+  "n_clusters": 40
+ },
+ "por_banco": {
+  "gemeos_leokadius.jsonl": {
+   "travas": {
+    "PR-SCHEMA": "PASSOU",
+    "PR-LEXICO": "PASSOU",
+    "PR-LEAK": "ACUSOU",
+    "PR-SCRUB": "PASSOU",
+    "PR-META": "PASSOU",
+    "PR-MOLDE": "PASSOU",
+    "PR-CLUSTER": "ACUSOU",
+    "PR-FAMILIA": "ACUSOU",
+    "PR-ORTOGRAFIA": "PASSOU",
+    "PR-USUARIO": "PASSOU",
+    "PR-DUP": "ACUSOU",
+    "PR-INDICE": "PASSOU"
+   },
+   "acusacoes": {
+    "PR-LEAK": "PR-LEAK: 2 acusacoes {'leak:aridade_3': 2}. Item que repete n-grama do preambulo faz o banco pontuar o gradiente descendo sobre a propria instrucao: mede que o treino aconteceu, nao que a persona age. Primeiras: [('leokadius-c03-p0', 'leak:aridade_3', \"prompt: ('pode', 'dar', 'errado') (de leokadius)\"), ('leokadius-c18-p0', 'leak:aridade_3', \"prompt: ('pode', 'dar', 'errado') (de leokadius)\")]",
+    "PR-CLUSTER": "PR-CLUSTER: 3 acusacoes {'cluster:vizinho': 3}. Parafrase que muda rotulo, copia clausula inteira ou mora mais perto de outro cluster nao e' parafrase: e' outro item com o rotulo do primeiro. Primeiras: [('leokadius-c10-p1', 'cluster:vizinho', 'leokadius-c15-p1 (leokadius_c15) a 0.122 contra companheiro a 0.111'), ('leokadius-c12-p0', 'cluster:vizinho', 'leokadius-c07-p1 (leokadius_c07) a 0.143 contra companheiro a 0.130'), ('leokadius-c13-p0', 'cluster:vizinho', 'leokadius-c07-p0 (leokadius_c07) a 0.170 contra companheiro a 0.106')]",
+    "PR-FAMILIA": "PR-FAMILIA: 1 acusacoes {'familia:repete_no_movimento': 1}. Dois clusters que contam a mesma historia sao dois clusters vendidos como dois e medidos como um — e a celula que os contem reporta n maior do que mediu. Primeiras: [('(banco)', 'familia:repete_no_movimento', \"'projeto_entregue_diretoria_preferiu_outro' em 2 clusters do movimento 'dicotomia_do_controle': ['leokadius_c00', 'leokadius_c05']\")]",
+    "PR-DUP": "PR-DUP: 3 acusacoes {'dup:quase_duplicata': 3}. Uma duplicata infla o n de clusters, que e' exatamente o n sobre o qual o gate decide. Primeiras: [('leokadius-c10-p1', 'dup:quase_duplicata', 'leokadius-c15-p1 (leokadius_c15) a 0.122 contra companheiro a 0.111'), ('leokadius-c12-p0', 'dup:quase_duplicata', 'leokadius-c07-p1 (leokadius_c07) a 0.143 contra companheiro a 0.130'), ('leokadius-c13-p0', 'dup:quase_duplicata', 'leokadius-c07-p0 (leokadius_c07) a 0.170 contra companheiro a 0.106')]"
+   },
+   "travas_nao_rodadas": [
+    "PR-PAR",
+    "PR-F4",
+    "PR-HIJACK",
+    "PR-COMPARTILHADO"
+   ],
+   "n_itens": 40,
+   "n_clusters": 20
+  },
+  "gemeos_shadowclock.jsonl": {
+   "travas": {
+    "PR-SCHEMA": "PASSOU",
+    "PR-LEXICO": "PASSOU",
+    "PR-LEAK": "PASSOU",
+    "PR-SCRUB": "PASSOU",
+    "PR-META": "PASSOU",
+    "PR-MOLDE": "PASSOU",
+    "PR-CLUSTER": "ACUSOU",
+    "PR-FAMILIA": "ACUSOU",
+    "PR-ORTOGRAFIA": "PASSOU",
+    "PR-USUARIO": "PASSOU",
+    "PR-DUP": "ACUSOU",
+    "PR-INDICE": "PASSOU"
+   },
+   "acusacoes": {
+    "PR-CLUSTER": "PR-CLUSTER: 6 acusacoes {'cluster:vizinho': 6}. Parafrase que muda rotulo, copia clausula inteira ou mora mais perto de outro cluster nao e' parafrase: e' outro item com o rotulo do primeiro. Primeiras: [('shadowclock-c00-p0', 'cluster:vizinho', 'shadowclock-c05-p1 (shadowclock_c05) a 0.163 contra companheiro a 0.152'), ('shadowclock-c12-p0', 'cluster:vizinho', 'shadowclock-c08-p1 (shadowclock_c08) a 0.167 contra companheiro a 0.140'), ('shadowclock-c12-p1', 'cluster:vizinho', 'shadowclock-c04-p0 (shadowclock_c04) a 0.152 contra companheiro a 0.140'), ('shadowclock-c13-p0', 'cluster:vizinho', 'shadowclock-c08-p0 (shadowclock_c08) a 0.227 contra companheiro a 0.190'), ('shadowclock-c17-p0', 'cluster:vizinho', 'shadowclock-c06-p0 (shadowclock_c06) a 0.122 contra companheiro a 0.119')]",
+    "PR-FAMILIA": "PR-FAMILIA: 1 acusacoes {'familia:repete_no_movimento': 1}. Dois clusters que contam a mesma historia sao dois clusters vendidos como dois e medidos como um — e a celula que os contem reporta n maior do que mediu. Primeiras: [('(banco)', 'familia:repete_no_movimento', \"'negocio_do_pai_ja_assumido' em 2 clusters do movimento 'liberdade_radical': ['shadowclock_c02', 'shadowclock_c06']\")]",
+    "PR-DUP": "PR-DUP: 6 acusacoes {'dup:quase_duplicata': 6}. Uma duplicata infla o n de clusters, que e' exatamente o n sobre o qual o gate decide. Primeiras: [('shadowclock-c00-p0', 'dup:quase_duplicata', 'shadowclock-c05-p1 (shadowclock_c05) a 0.163 contra companheiro a 0.152'), ('shadowclock-c12-p0', 'dup:quase_duplicata', 'shadowclock-c08-p1 (shadowclock_c08) a 0.167 contra companheiro a 0.140'), ('shadowclock-c12-p1', 'dup:quase_duplicata', 'shadowclock-c04-p0 (shadowclock_c04) a 0.152 contra companheiro a 0.140'), ('shadowclock-c13-p0', 'dup:quase_duplicata', 'shadowclock-c08-p0 (shadowclock_c08) a 0.227 contra companheiro a 0.190'), ('shadowclock-c17-p0', 'dup:quase_duplicata', 'shadowclock-c06-p0 (shadowclock_c06) a 0.122 contra companheiro a 0.119')]"
+   },
+   "travas_nao_rodadas": [
+    "PR-PAR",
+    "PR-F4",
+    "PR-HIJACK",
+    "PR-COMPARTILHADO"
+   ],
+   "n_itens": 40,
+   "n_clusters": 20
+  }
+ },
+ "par": {
+  "veredito": "REPROVADO",
+  "acusacao": "PR-PAR: 1 acusacoes {'par:dose_media': 1}. Assimetria sistematica entre os bracos e' resolvida pelo modelo antes do construto, e a diferenca aparece como divergencia de persona. Primeiras: [('(bancos)', 'par:dose_media', 'leokadius - shadowclock = -0.27 tokens, IC95 [-3.55; +2.90] fora de +-1.5 -> NAO_DEMONSTRADO')]"
+ }
+}
