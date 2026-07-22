@@ -891,6 +891,79 @@ def _sha256_texto(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
+def confere_conjunto_aceito(saida: Sequence[ItemEscolha],
+                            escolhidas: Mapping[str, Proposta]) -> dict:
+    """O CONJUNTO aceito nao pode fabricar um marcador que o banco de entrada nao tinha.
+
+    ACHADO POR AUDITORIA EM 2026-07-22, com contraexemplo rodado, e classificado FATAL.
+    `propor` ordena por `abs(delta_chars_resultante)`. Minimizar a MAGNITUDE nao controla o
+    SINAL, e o sinal e' exatamente o que `sup_comprimento` le. Pior: qual FORMA da classe e'
+    escolhida fica determinada pelo sinal — quando o lado designado e' a consistente a
+    ferramenta ENCURTA, quando e' a violadora ela ALONGA, e nos dois casos a forma curta acaba
+    do lado da consistente.
+
+    O contraexemplo: 12 itens, consistente 4 caracteres mais longa, mesmo conector nos dois
+    lados. Designacao balanceada 6/6. Aceitando a MELHOR proposta de cada item, sai 12/12
+    conforme, P-LEN zerado, todo |Dchar| = 2 <= TAU — e todos com o MESMO SINAL. Um
+    respondedor de duas linhas `conector_curto` sobe de 0,000 na entrada para **1,000** na
+    saida. A ferramenta nao cancelou o atalho: MOVEU do eixo de comprimento para o lexical, e
+    o eixo lexical nao esta' na bateria registrada.
+
+    E' a lente 3 na letra — o pareamento (aqui, a designacao balanceada de lado) cancela o
+    atalho ESTATICO, nao o que o proprio processo move.
+
+    Duas travas, as duas POR ESTRATO, porque e' nessa granularidade que a faceta e' reportada:
+
+      SINAL     entre os itens com |Dchar| > 0, os positivos e os negativos ficam a no maximo
+                um de distancia. Sinal todo do mesmo lado e' `sup_comprimento` = 1,000.
+      LEXICO    nenhuma forma que a ferramenta INTRODUZIU pode cair sempre do mesmo lado. Se
+                `para` aterrissa na consistente em todos os itens em que aparece (e sao 2 ou
+                mais), ela virou o rotulo.
+    """
+    por_estrato: dict[str, list[ItemEscolha]] = {}
+    for it in saida:
+        por_estrato.setdefault(it.invariante, []).append(it)
+
+    ruins: list[str] = []
+    laudo: dict = {"por_estrato": {}}
+    for estrato, grupo in sorted(por_estrato.items()):
+        sinais = [len(i.op_consistente) - len(i.op_violadora) for i in grupo]
+        pos = sum(1 for d in sinais if d > 0)
+        neg = sum(1 for d in sinais if d < 0)
+        laudo["por_estrato"][estrato] = {"positivos": pos, "negativos": neg,
+                                         "empates": len(sinais) - pos - neg}
+        if pos + neg >= 2 and abs(pos - neg) > 1:
+            ruins.append(
+                f"SINAL no estrato {estrato!r}: {pos} itens com a consistente mais longa "
+                f"contra {neg} com a violadora. Sinal desequilibrado e' exatamente o que "
+                f"`sup_comprimento` le — o conjunto aceito reintroduz o atalho que cada item "
+                "isolado respeita.")
+
+    # LEXICO: para cada forma introduzida, de que lado ela aterrissou.
+    lados_por_forma: dict[str, set[str]] = {}
+    contagem: dict[str, int] = {}
+    for p in escolhidas.values():
+        for op in p.operacoes:
+            lados_por_forma.setdefault(op.para, set()).add(op.lado)
+            contagem[op.para] = contagem.get(op.para, 0) + 1
+    laudo["formas_introduzidas"] = {f: {"n": contagem[f], "lados": sorted(l)}
+                                    for f, l in sorted(lados_por_forma.items())}
+    for forma, lados in sorted(lados_por_forma.items()):
+        if contagem[forma] >= 2 and len(lados) == 1:
+            ruins.append(
+                f"LEXICO: a forma {forma!r} foi introduzida {contagem[forma]} vezes e SEMPRE "
+                f"do lado {lados.pop()!r}. Uma forma que so' aparece de um lado e' rotulo, e "
+                "ela nao existia no banco de entrada: quem a poe ali e' esta ferramenta.")
+
+    if ruins:
+        raise OperacaoProibida(
+            "o CONJUNTO aceito fabrica marcador que o banco de entrada nao tinha:\n  - "
+            + "\n  - ".join(ruins)
+            + "\nAceite outra combinacao de propostas, ou reescreva os itens a mao. Ver o "
+              "docstring de `confere_conjunto_aceito`.")
+    return laudo
+
+
 def aplicar(itens: Sequence[ItemEscolha], propostas: Mapping[str, Sequence[Proposta]],
             aceitas: Mapping[str, str], *, lex: Lexico, seed: int,
             origem: str | Path, destino: str | Path, livro_razao: str | Path,
@@ -973,6 +1046,10 @@ def aplicar(itens: Sequence[ItemEscolha], propostas: Mapping[str, Sequence[Propo
             "operacoes": [{"lado": o.lado, "classe_id": o.classe_id, "de": o.de, "para": o.para}
                           for o in p.operacoes],
         })
+
+    # A trava do CONJUNTO, e nao do item. Roda DEPOIS de montar a saida e ANTES de escrever
+    # qualquer byte: um marcador fabricado pela ferramenta so' e' visivel no conjunto.
+    confere_conjunto_aceito(saida, escolhidas)
 
     destino.write_text(
         "".join(json.dumps(asdict(it), ensure_ascii=False) + "\n" for it in saida),

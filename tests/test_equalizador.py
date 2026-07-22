@@ -835,3 +835,75 @@ def test_sup_comprimento_acusa_por_estrato_com_agregado_limpo():
     laudo = valida_por_sujeitos(itens)
     assert set(laudo.estratos_solveis) == {"inv_a", "inv_b"}, laudo.resumo()
     assert laudo.banco_utilizavel is False
+
+
+# ===========================================================================
+# O CONJUNTO ACEITO — a trava que nasceu do FATAL da auditoria de 2026-07-22
+# ===========================================================================
+def test_conjunto_com_sinal_todo_do_mesmo_lado_ABORTA():
+    """O contraexemplo da auditoria, reduzido ao que ele prova.
+
+    Cada item, isolado, e' conforme: |Dchar| = 2 <= TAU_CHAR. O CONJUNTO nao e': os doze tem
+    o mesmo SINAL, e sinal e' o que `sup_comprimento` le. Minimizar magnitude nao controla
+    direcao, e foi por isso que a ordenacao de `propor` — que so' olha `abs()` — deixou passar.
+    """
+    saida = [_item(f"x-{i}", cons="a" * 12, viol="b" * 10) for i in range(12)]
+    with pytest.raises(eq.OperacaoProibida, match="SINAL"):
+        eq.confere_conjunto_aceito(saida, {})
+
+
+def test_conjunto_com_sinal_alternado_PASSA():
+    """A outra metade do controle. Sem ela, uma trava que aborta sempre passaria acima."""
+    saida = ([_item(f"p-{i}", cons="a" * 12, viol="b" * 10) for i in range(6)]
+             + [_item(f"n-{i}", cons="a" * 10, viol="b" * 12) for i in range(6)])
+    laudo = eq.confere_conjunto_aceito(saida, {})
+    est = laudo["por_estrato"]["nao_capitula_sob_pressao"]
+    assert (est["positivos"], est["negativos"]) == (6, 6)
+
+
+def test_a_trava_e_POR_ESTRATO_e_o_agregado_nao_salva():
+    """Dois estratos com sinais opostos se cancelam no agregado e cada um esta' resolvido.
+
+    E' o defeito da Regra 7 aplicado ao instrumento, e ja' aconteceu neste repo com
+    `negativista` no banco V0.
+    """
+    saida = ([_item(f"a-{i}", cons="a" * 12, viol="b" * 10,
+                    invariante="inv_a", polo="sub") for i in range(6)]
+             + [_item(f"b-{i}", cons="a" * 10, viol="b" * 12,
+                      invariante="inv_b", polo="super") for i in range(6)])
+    with pytest.raises(eq.OperacaoProibida, match="inv_a|inv_b"):
+        eq.confere_conjunto_aceito(saida, {})
+
+
+def test_forma_introduzida_sempre_do_MESMO_lado_ABORTA():
+    """O segundo eixo do FATAL: a ferramenta MOVE o atalho para o lexico.
+
+    Medido pela auditoria: em 12/12 itens a consistente acabou com o conector mais curto, e um
+    respondedor `conector_curto` subiu de 0,000 na entrada para 1,000 na saida. A forma nao
+    existia ali antes — quem a pos foi a ferramenta.
+    """
+    saida = ([_item(f"p-{i}", cons="a" * 12, viol="b" * 10) for i in range(3)]
+             + [_item(f"n-{i}", cons="a" * 10, viol="b" * 12) for i in range(3)])
+    op = eq.Operacao(lado="consistente", classe_id="adversativo", de="porém", para="mas",
+                     delta_tok_isolado=0, delta_tok_slot=(0, 0), delta_chars=-3)
+    escolhidas = {f"p-{i}": eq.Proposta(
+        proposta_id=f"pid-{i}", item_id=f"p-{i}", operacoes=(op,),
+        delta_tok_isolado_resultante=0, delta_tok_slot_resultante=(0, 0),
+        delta_chars_resultante=2, lado_editado=("consistente",)) for i in range(3)}
+    with pytest.raises(eq.OperacaoProibida, match="LEXICO"):
+        eq.confere_conjunto_aceito(saida, escolhidas)
+
+
+def test_forma_introduzida_dos_DOIS_lados_passa():
+    saida = ([_item(f"p-{i}", cons="a" * 12, viol="b" * 10) for i in range(3)]
+             + [_item(f"n-{i}", cons="a" * 10, viol="b" * 12) for i in range(3)])
+    mk = lambda lado: eq.Operacao(lado=lado, classe_id="adversativo", de="porém", para="mas",  # noqa: E731
+                                  delta_tok_isolado=0, delta_tok_slot=(0, 0), delta_chars=-3)
+    escolhidas = {}
+    for i, lado in enumerate(("consistente", "violadora", "consistente")):
+        escolhidas[f"p-{i}"] = eq.Proposta(
+            proposta_id=f"pid-{i}", item_id=f"p-{i}", operacoes=(mk(lado),),
+            delta_tok_isolado_resultante=0, delta_tok_slot_resultante=(0, 0),
+            delta_chars_resultante=2, lado_editado=(lado,))
+    laudo = eq.confere_conjunto_aceito(saida, escolhidas)
+    assert laudo["formas_introduzidas"]["mas"]["lados"] == ["consistente", "violadora"]
