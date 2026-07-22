@@ -90,7 +90,14 @@ CAMPOS: tuple[str, ...] = (
 # para a mesma coisa — e a que perdesse seria descoberta so' no artefato final.
 CAMPOS_DO_REGISTRADOR = ("schema", "etapa", "ordem", "sha256_resposta")
 CAMPOS_ACEITOS = tuple(c for c in CAMPOS if c not in CAMPOS_DO_REGISTRADOR)
-CAMPOS_OBRIGATORIOS = ("papel", "resposta_completa")
+# `truncada` entrou aqui em 2026-07-22, depois de uma auditoria apontar que o docstring do
+# modulo o chamava de OBRIGATORIO e o codigo so' imprimia um aviso quando ele faltava. Sob 110
+# itens por invariante, um aviso no console e' indistinguivel de nao existir.
+#
+# Obrigatorio quer dizer que o chamador precisa DIZER — nao que ele precise saber. `None` e'
+# valor legitimo e significa "nao sei se cortou"; o que deixou de ser aceito e' a OMISSAO, que
+# e' silencio disfarcado de ausencia de problema.
+CAMPOS_OBRIGATORIOS = ("papel", "resposta_completa", "truncada")
 
 # Nome de etapa vira NOME DE ARQUIVO. Sem esta trava, `etapa="../../qualquer"` escreveria
 # fora de runs/conversas.
@@ -126,7 +133,22 @@ def caminho_da_etapa(etapa: str, *, runs_dir: Path | str | None = None) -> Path:
             f"etapa {etapa!r} nao serve como nome de arquivo: use [A-Za-z0-9_.-], comecando "
             "por letra ou digito (a etapa vira runs/conversas/<etapa>.jsonl)"
         )
-    return dir_conversas(runs_dir) / f"{etapa}.jsonl"
+    d = dir_conversas(runs_dir)
+    # COLISAO POR CAIXA. O estudo roda em Windows, onde o sistema de arquivos e'
+    # case-insensitive: `V1_teto` e `v1_teto` sao duas etapas para o codigo e UM arquivo para o
+    # disco, e a segunda anexaria em cima da primeira sem uma palavra. Apontado por auditoria
+    # em 2026-07-22. Abortar e' o comportamento correto: as duas etapas existem no desenho de
+    # quem escreveu, e fundi-las perde a separacao que o campo `etapa` existe para manter.
+    if d.is_dir():
+        for existente in d.glob("*.jsonl"):
+            nome = existente.stem
+            if nome != etapa and nome.casefold() == etapa.casefold():
+                raise ConversaError(
+                    f"etapa {etapa!r} colide por CAIXA com {nome!r}, que ja' existe em {d}. "
+                    "Neste sistema de arquivos as duas viram o mesmo arquivo e uma anexaria "
+                    "sobre a outra em silencio. Escolha um nome distinto de verdade."
+                )
+    return d / f"{etapa}.jsonl"
 
 
 class Leitura(list):
@@ -331,6 +353,7 @@ def le_etapa(etapa: str, *, runs_dir: Path | str | None = None,
     caminho = caminho_da_etapa(etapa, runs_dir=runs_dir)
     registros: list[dict] = []
     invalidas: list[int] = []
+    adulteradas: list[int] = []
     total_linhas = 0
     if caminho.exists():
         bruto = caminho.read_bytes()
@@ -348,9 +371,24 @@ def le_etapa(etapa: str, *, runs_dir: Path | str | None = None,
             if not isinstance(obj, dict):
                 invalidas.append(numero)
                 continue
+            # SELO CONFERIDO NA LEITURA. Ate' 2026-07-22 `sha256_resposta` era calculado na
+            # escrita e NUNCA verificado por nada — auditoria trocou um byte dentro de uma
+            # linha JSON valida e `le_etapa` devolveu o texto adulterado com invalidas=0.
+            # Um selo que ninguem confere nao e' selo, e' decoracao.
+            selo = obj.get("sha256_resposta")
+            if isinstance(selo, str) and selo:
+                if sha256_texto(obj.get("resposta_completa") or "") != selo:
+                    adulteradas.append(numero)
             registros.append(obj)
 
     leitura = Leitura(registros, tuple(invalidas))
+    leitura.linhas_adulteradas = tuple(adulteradas)
+    if adulteradas and not silencioso:
+        print(
+            f"[conversa] ALERTA: etapa {etapa!r}: {len(adulteradas)} registro(s) com "
+            f"sha256_resposta que NAO bate com o texto, nas linhas {adulteradas} de "
+            f"{caminho}. Isto nao e' queda de escrita: e' texto alterado depois de gravado."
+        )
     if invalidas and not silencioso:
         # `total_linhas` conta o pedaco vazio depois do ultimo "\n"; por isso o limite e' -1.
         so_no_fim = all(n >= total_linhas - 1 for n in invalidas)
@@ -435,8 +473,13 @@ def _turnos_de_conteudo(papel: str, conteudo: Any) -> list[dict]:
         elif tipo == "tool_use":
             texto = json.dumps(bloco.get("input"), ensure_ascii=False, indent=1)
         elif tipo == "tool_result":
+            # O `[:_MAX_TURNO]` estava AQUI, antes do teste de tamanho la' embaixo. Com isso o
+            # texto chegava ao teste com exatamente _MAX_TURNO caracteres, `>` dava falso, e as
+            # marcas `truncado_em`/`tamanho_original` NUNCA eram emitidas neste ramo — corte
+            # silencioso num artefato chamado "respostas completas". Achado por auditoria em
+            # 2026-07-22; o corte agora acontece num lugar so', e ele se declara.
             texto = _texto_de_conteudo(bloco.get("content")) or json.dumps(
-                bloco.get("content"), ensure_ascii=False)[:_MAX_TURNO]
+                bloco.get("content"), ensure_ascii=False)
         else:
             texto = json.dumps(bloco, ensure_ascii=False)
         if not isinstance(texto, str) or not texto.strip():

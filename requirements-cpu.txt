@@ -10,3 +10,9 @@ numpy==2.4.6
 scipy==1.18.0
 PyYAML==6.0.3
 pytest==8.4.2
+# `tokenizers` (SEM torch e SEM transformers) entrou em 2026-07-22. Sem ele, PR-PAR,
+# PR-INDICE, PR-HIJACK e P-LEN nao rodam e NENHUM banco pode ser selado na maquina de CPU —
+# que e' exatamente o estado do qual `harness/tokenizacao.py` existe para sair. Ele estava
+# instalado no .venv e nao estava declarado aqui; um clone que seguisse o setup documentado
+# caia em TokenizerIndisponivel. Apontado pelo proprio agente que escreveu o modulo.
+tokenizers==0.23.1

@@ -9,7 +9,9 @@ description = "Pre-registered confirmatory study on installing a persona into mo
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.12"
-dependencies = ["numpy>=2.0", "scipy>=1.14", "PyYAML>=6.0"]
+# `tokenizers` e' dependencia BASE, e nao extra de GPU: a contagem de tokens e' o que
+# torna um banco selavel, e o selo acontece na maquina de CPU.
+dependencies = ["numpy>=2.0", "scipy>=1.14", "PyYAML>=6.0", "tokenizers>=0.21"]
 
 [project.optional-dependencies]
 # Caminho de GPU (treino/geracao/juiz). Instalado so' quando ha' janela de GPU; o

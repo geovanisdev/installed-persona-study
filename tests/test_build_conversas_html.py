@@ -73,7 +73,8 @@ def test_o_corte_aparece_como_selo(tmp_path, repo):
 
 def test_truncada_indefinida_tambem_aparece(tmp_path, repo):
     with abre_etapa("x", runs_dir=tmp_path, run_meta=META) as reg:
-        reg.registra(papel="gerador", resposta_completa="oi")     # truncada ausente
+        # `None` DECLARADO — omitir passou a levantar em 2026-07-22.
+        reg.registra(papel="gerador", resposta_completa="oi", truncada=None)
     doc = monta({"x": list(le_etapa("x", runs_dir=tmp_path))}, repo=repo)
     assert "não se sabe se cortou" in doc
 

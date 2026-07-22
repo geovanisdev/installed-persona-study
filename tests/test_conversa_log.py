@@ -153,10 +153,25 @@ def test_campo_do_registro_vence_o_selo_de_run(tmp_path):
 
 # --- truncada ---------------------------------------------------------------
 
-def test_truncada_none_avisa_nomeando_o_registro(tmp_path, capsys):
-    """Controle positivo do aviso: sem `truncada`, o modulo GRITA e nomeia o item."""
+def test_omitir_truncada_LEVANTA(tmp_path):
+    """Desde 2026-07-22 `truncada` e' campo OBRIGATORIO de verdade, e nao so' no docstring.
+
+    Antes, omiti-lo custava um `print`. Sob D2 (110 itens por invariante × 9 sujeitos × 3
+    sementes) um aviso de console e' indistinguivel de nao existir. Obrigatorio quer dizer
+    que o chamador precisa DIZER — nao que precise saber: `None` continua valendo e significa
+    "nao sei se cortou". O que deixou de ser aceito e' a OMISSAO.
+    """
     campos = _campos()
     campos.pop("truncada")
+    with abre_etapa("v1", run_meta=META, runs_dir=tmp_path) as reg:
+        with pytest.raises(ConversaError, match="truncada"):
+            reg.registra(**campos)
+
+
+def test_truncada_none_avisa_nomeando_o_registro(tmp_path, capsys):
+    """Controle positivo do aviso: com `truncada=None` DECLARADO, o modulo GRITA e nomeia."""
+    campos = _campos()
+    campos["truncada"] = None
     with abre_etapa("v1", run_meta=META, runs_dir=tmp_path) as reg:
         r = reg.registra(**campos)
         assert reg.sem_truncada == 1
@@ -325,6 +340,68 @@ def test_importa_transcricao_de_agente(tmp_path):
     assert lido[1]["prompt_completo"] == "Agora escreva os testes."
     assert lido[1]["ordem"] == 1
     assert lido[0]["sha256_resposta"] == sha256_texto(lido[0]["resposta_completa"])
+
+
+def test_selo_adulterado_e_ACUSADO_na_leitura(tmp_path, capsys):
+    """Controle positivo do selo. Ate' 2026-07-22 `sha256_resposta` era gravado e NUNCA
+    conferido: trocar um byte dentro de uma linha JSON valida devolvia o texto adulterado com
+    `invalidas=0`. Um selo que ninguem confere e' decoracao, nao integridade."""
+    with abre_etapa("v1", run_meta=META, runs_dir=tmp_path) as reg:
+        reg.registra(papel="base_nua", resposta_completa="Sou um sistema de texto.",
+                     truncada=False)
+    p = caminho_da_etapa("v1", runs_dir=tmp_path)
+    bruto = p.read_text(encoding="utf-8")
+    p.write_text(bruto.replace("Sou um sistema", "Sou uma pessoa"), encoding="utf-8")
+
+    lido = le_etapa("v1", runs_dir=tmp_path)
+    assert lido.invalidas == 0, "a linha continua JSON valido — nao e' esse o defeito"
+    assert lido.linhas_adulteradas == (1,)
+    assert "ALERTA" in capsys.readouterr().out
+
+
+def test_selo_intacto_nao_acusa(tmp_path):
+    """A outra metade do controle: sem ela, uma trava que acusa SEMPRE passaria no teste acima."""
+    with abre_etapa("v1", run_meta=META, runs_dir=tmp_path) as reg:
+        for i in range(5):
+            reg.registra(papel="gerador", resposta_completa=f"resposta {i} com acento é",
+                         truncada=False)
+    assert le_etapa("v1", runs_dir=tmp_path).linhas_adulteradas == ()
+
+
+def test_etapa_que_colide_por_CAIXA_aborta(tmp_path):
+    """O estudo roda em Windows, onde o sistema de arquivos e' case-insensitive: `V1` e `v1`
+    sao duas etapas para o codigo e UM arquivo para o disco, e a segunda anexaria sobre a
+    primeira sem uma palavra."""
+    with abre_etapa("V1_teto", run_meta=META, runs_dir=tmp_path) as reg:
+        reg.registra(papel="gerador", resposta_completa="primeira", truncada=False)
+    with pytest.raises(ConversaError, match="colide por CAIXA"):
+        with abre_etapa("v1_teto", run_meta=META, runs_dir=tmp_path):
+            pass
+
+
+def test_turno_gigante_de_ferramenta_DECLARA_o_corte(tmp_path):
+    """O `[:_MAX_TURNO]` era aplicado ANTES do teste de tamanho no ramo `tool_result`: o texto
+    chegava com exatamente _MAX_TURNO caracteres, `>` dava falso, e `truncado_em` nunca era
+    emitido. Corte silencioso num artefato chamado "respostas completas"."""
+    from harness.conversa_log import _MAX_TURNO
+    gigante = "x" * (_MAX_TURNO + 500)
+    linhas = [
+        {"type": "user", "message": {"role": "user", "content": "vai"}},
+        {"type": "user", "message": {"role": "user", "content": [
+            {"type": "tool_result", "content": [{"type": "text", "text": gigante}]}]}},
+        {"type": "assistant", "message": {"role": "assistant", "content": [
+            {"type": "text", "text": "pronto"}]}},
+    ]
+    origem = tmp_path / "a.jsonl"
+    origem.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in linhas) + "\n",
+                      encoding="utf-8")
+    importa_transcricao_de_agente(origem, "bancada", runs_dir=tmp_path, run_meta=META,
+                                  truncada=False)
+    turnos = [t for r in le_etapa("bancada", runs_dir=tmp_path) for t in (r["turnos"] or [])]
+    cortados = [t for t in turnos if t.get("truncado_em")]
+    assert len(cortados) == 1, turnos
+    assert cortados[0]["tamanho_original"] == _MAX_TURNO + 500
+    assert len(cortados[0]["texto"]) == _MAX_TURNO
 
 
 def test_importa_guarda_a_troca_de_ferramenta_em_turnos(tmp_path):
