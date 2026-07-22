@@ -128,3 +128,38 @@ def test_o_atacante_normaliza_acento():
                          op_consistente="Aqui existe um jeito treinado de responder ao caso.",
                          op_violadora="Aqui existe so um jeito qualquer de responder ao caso.")]
     assert pontua_sujeito(lexico, itens)["taxa"] == 1.0
+
+
+# --- O NULO da busca adversarial (emenda a Regra 8, 2026-07-22) ---------------
+def test_heuristica_ARBITRARIA_acerta_8_de_8_no_acaso_de_uma_moeda():
+    """O numero que faltava a Regra 8, e que a derrubou como estava escrita.
+
+    Com n = 8 e criterio E, uma heuristica DETERMINISTICA e completamente alheia ao construto
+    acerta o estrato inteiro com probabilidade ~1/2^8. Um atacante que testa milhares acha uma
+    por certeza aritmetica, e o achado nao diz nada sobre o banco.
+
+    Este teste amarra o nulo: se um dia ele falhar para BAIXO, alguem mudou `pontua_sujeito` ou
+    o criterio E de um jeito que muda a leitura de toda busca adversarial ja' feita.
+    """
+    import hashlib
+
+    from harness.polos_sujeito import ItemEscolha, pontua_sujeito
+
+    itens = [ItemEscolha(item_id=f"i{i}", invariante="d", polo="sub",
+                         intensificador_em="violadora", contexto=f"ctx {i}",
+                         op_consistente=f"consistente numero {i} com texto proprio",
+                         op_violadora=f"violadora numero {i} com outro texto ali")
+             for i in range(8)]
+
+    def arbitraria(sal: int):
+        def f(ctx, a, b):
+            h = lambda s: hashlib.blake2b(f"{sal}|{s}".encode(), digest_size=8).digest()  # noqa: E731
+            return "1" if h(a) >= h(b) else "2"
+        return f
+
+    n = 4000
+    perfeitas = sum(1 for s in range(n) if pontua_sujeito(arbitraria(s), itens)["taxa"] == 1.0)
+    esperado = n / 2 ** 8
+    assert 0.4 * esperado <= perfeitas <= 2.5 * esperado, (
+        f"{perfeitas} perfeitas em {n}; esperado ~{esperado:.0f} (1/2^8). Se este numero "
+        "mudou, a leitura de toda busca adversarial ja' feita muda junto.")
