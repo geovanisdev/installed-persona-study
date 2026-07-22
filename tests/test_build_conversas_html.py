@@ -103,8 +103,11 @@ def test_explicador_e_bilingue_em_pares(tmp_path, repo):
     """ADR 0009: pares de slot pt/en, um para um. Ingles faltando e' regressao silenciosa."""
     doc = monta(_dados(tmp_path), repo=repo)
     import re
-    pt = set(re.findall(r"data-slot='exp-([a-z-]+)-pt'", doc))
-    en = set(re.findall(r"data-slot='exp-([a-z-]+)-en'", doc))
+    # [a-z0-9-] e nao [a-z-]: com a classe sem digito, um slug como `regra8` NAO casa e o
+    # par inteiro e' pulado em silencio — a guarda passaria por VACUIDADE. Aconteceu de fato
+    # no gerador do relatorio de 2026-07-22, que reportou 6 pares onde havia 8.
+    pt = set(re.findall(r"data-slot='exp-([a-z0-9-]+)-pt'", doc))
+    en = set(re.findall(r"data-slot='exp-([a-z0-9-]+)-en'", doc))
     assert pt and pt == en, (pt ^ en)
 
 
