@@ -33,3 +33,17 @@ Thumbs.db
 
 # NOTE: runs/ is deliberately NOT ignored. Raw generations are evidence (W4)
 # and are committed with their provenance seal.
+
+# --- conversas de BANCADA, e so' elas (2026-07-22, decisao PENDENTE do Arquiteto) ---
+# A regra acima continua valendo: geracao bruta e' evidencia e vai versionada. Estas nao sao
+# geracao: sao as transcricoes dos agentes que CONSTROEM o estudo (papel="autor"), e o proprio
+# `conversa_log` ja' as separa dos bracos experimentais para que trabalho de bancada nao seja
+# lido como dado do desenho.
+#
+# Ficam fora do repo PUBLICO por um motivo estreito e verificado: elas carregam 190 caminhos
+# locais com o nome de usuario da maquina. Nao ha' token, chave, IP nem e-mail — isso foi
+# medido, nao suposto. Publicar exige ou um scrub declarado dos caminhos, ou a decisao de que
+# o nome de usuario nao importa. As duas sao do Arquiteto.
+#
+# O artefato montado vive no repo meta enquanto isso.
+runs/conversas/S3*.jsonl
