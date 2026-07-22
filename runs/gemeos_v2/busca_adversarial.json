@@ -1,0 +1,134 @@
+{
+ "carater": "BUSCA_ADVERSARIAL",
+ "limiar": 0.9,
+ "controle_positivo": {
+  "atalho_plantado": "pontuacao final",
+  "acuracia": 1.0,
+  "familia": "forma"
+ },
+ "n_alvo": 100,
+ "n_transferencia": 80,
+ "veredito_forma": "nenhuma regra de FORMA separa o alvo",
+ "achados": [
+  {
+   "regra": "campo_sentido",
+   "familia": "conteudo",
+   "acuracia_alvo": 0.62,
+   "corte": 0.5,
+   "sentido": "a<=c",
+   "acuracia_transferencia": 0.613,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "campo_controle",
+   "familia": "conteudo",
+   "acuracia_alvo": 0.6,
+   "corte": 0.5,
+   "sentido": "a>c",
+   "acuracia_transferencia": 0.6,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "palavra_media",
+   "familia": "forma",
+   "acuracia_alvo": 0.58,
+   "corte": 4.743,
+   "sentido": "a>c",
+   "acuracia_transferencia": 0.487,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "negacoes",
+   "familia": "conteudo",
+   "acuracia_alvo": 0.57,
+   "corte": 1.5,
+   "sentido": "a<=c",
+   "acuracia_transferencia": 0.6,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "n_palavras",
+   "familia": "forma",
+   "acuracia_alvo": 0.55,
+   "corte": 38.5,
+   "sentido": "a<=c",
+   "acuracia_transferencia": 0.45,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "primeira_pessoa",
+   "familia": "conteudo",
+   "acuracia_alvo": 0.55,
+   "corte": 0.5,
+   "sentido": "a>c",
+   "acuracia_transferencia": 0.475,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "n_frases",
+   "familia": "forma",
+   "acuracia_alvo": 0.54,
+   "corte": 2.5,
+   "sentido": "a>c",
+   "acuracia_transferencia": 0.5,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "n_virgulas",
+   "familia": "forma",
+   "acuracia_alvo": 0.53,
+   "corte": 1.5,
+   "sentido": "a<=c",
+   "acuracia_transferencia": 0.512,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "termina_em_?",
+   "familia": "forma",
+   "acuracia_alvo": 0.5,
+   "corte": -1.0,
+   "sentido": "a>c",
+   "acuracia_transferencia": 0.5,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "tem_interrogacao",
+   "familia": "forma",
+   "acuracia_alvo": 0.5,
+   "corte": -1.0,
+   "sentido": "a>c",
+   "acuracia_transferencia": 0.5,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "n_digitos",
+   "familia": "forma",
+   "acuracia_alvo": 0.5,
+   "corte": -1.0,
+   "sentido": "a>c",
+   "acuracia_transferencia": 0.5,
+   "resolve_alvo": false,
+   "transfere": false
+  },
+  {
+   "regra": "primeira_palavra",
+   "familia": "forma",
+   "acuracia_alvo": 0.5,
+   "corte": 0.0,
+   "sentido": "a>c",
+   "acuracia_transferencia": 0.5,
+   "resolve_alvo": false,
+   "transfere": false
+  }
+ ]
+}

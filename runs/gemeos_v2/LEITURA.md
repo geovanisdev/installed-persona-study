@@ -115,6 +115,41 @@ Três saídas, sem recomendação embutida no código:
 3. **Manter tudo e aceitar `NÃO-DEMONSTRADO` como veredito esperado**, tratando `par:dose_media`
    como descritivo e não como gate. Custo: some a única guarda mecânica de assimetria de dose.
 
+## Busca adversarial: o critério é transferência, e a pergunta não é a do F3
+
+Num banco F3 a busca procura a heurística que **escolhe** a opção consistente sem ler o
+construto. Aqui não há opção — F2 é produção livre. A pergunta equivalente sob desenho cruzado,
+em que todo adapter responde os dois bancos, é: **uma regra de duas linhas diz de qual banco o
+item veio?** Se disser, *"o adapter responde diferente aos dois bancos"* pode ser artefato de os
+bancos serem trivialmente diferentes.
+
+Separabilidade alta não é defeito por si — os dois bancos convocam movimentos diferentes de
+propósito. O que decide é a **família** da regra que separa: regra de **forma** (comprimento,
+pontuação, frases, dígitos) não é o construto, e se separar é assimetria incidental de autoria;
+regra de **conteúdo** (campo semântico) é exatamente o que os movimentos são.
+
+| regra | família | alvo (n=100) | transferência (n=80) |
+|---|---|---|---|
+| `campo_sentido` | conteúdo | 0,620 | 0,613 |
+| `campo_controle` | conteúdo | 0,600 | 0,600 |
+| `palavra_media` | forma | 0,580 | 0,487 |
+| `negacoes` | conteúdo | 0,570 | 0,600 |
+| `n_palavras` | forma | 0,550 | 0,450 |
+| `termina_em_?` · `tem_interrogacao` · `n_digitos` · `primeira_palavra` | forma | 0,500 | 0,500 |
+
+**Nada chega perto do limiar de 0,90.** A melhor regra é de conteúdo e fica a 0,12 do acaso.
+Quatro regras de forma ficam exatamente em 0,500 — o acaso puro.
+
+E a busca **prova que sabe achar**: antes de rodar, o controle positivo planta um atalho de
+forma (um lado termina em `?`, o outro não) e exige 1,000. Se não achar, aborta. Uma busca que
+nunca acha nada não é evidência de banco limpo — pode estar quebrada, e é o defeito que
+`_controle_positivo` existe para pegar nas travas.
+
+**O que esta busca NÃO diz.** Que os bancos sejam indistinguíveis. Ela cobre 12 regras de um
+limiar só; um classificador treinado sobre o vocabulário separaria mais, e *deveria* — os
+movimentos são diferentes. A afirmação é a estreita: **nenhuma regra barata, e nenhuma regra
+cega ao construto, separa os dois braços.**
+
 ## Avisos que ficaram, e ficam declarados
 
 O ledger avisou colisão de número em `"quatro anos"` (c02, c08, c14) e `"cinco meses"` (c05,
