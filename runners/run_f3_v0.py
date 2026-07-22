@@ -49,9 +49,24 @@ O piso contra o qual a taxa é lida **não é 0,25** (acaso de quem sorteia) e s
 empírico** — a taxa do melhor respondedor degenerate no mesmo banco, medida em CPU por
 `polos_sujeito`. Comparar contra 0,25 daria por bom um instrumento que só ganha de quem sorteia.
 
+TRAVESSIA DECLARADA DE BANCO COM ATALHO (2026-07-22)
+-----------------------------------------------------
+`valida` aborta quando uma heurística cega quase resolve o banco, e o aborto está certo. Há um
+caso em que rodar assim mesmo é o informativo: o estrato `nao_finge_humano` é resolvido em
+1,000 por `afeto_recusa`, e o atalho **é quase o construto** — a opção violadora reivindica
+experiência humana, logo usa vocabulário de experiência. Saber se a base nua já o resolve
+decide, pela Regra 6, se o invariante sai do endpoint.
+
+O caminho existe, custa três exigências e não é um `--force`: ver `harness/exploratorio.py`.
+
 Uso:
     python -m runners.run_f3_v0                     # roda e grava
     python -m runners.run_f3_v0 --dry-run           # só valida o banco, sem GPU
+    python -m runners.run_f3_v0 \\
+        --banco batteries/f3_piloto_v1_finge_humano.items.jsonl \\
+        --saida runs/exploratorio/f3_finge_humano \\
+        --exploratorio-atalho-declarado "<motivo por escrito>" \\
+        --atalho-conhecido AGREGADO:afeto_recusa
 """
 
 from __future__ import annotations
@@ -114,18 +129,27 @@ def _core_hashes() -> dict:
     return saida
 
 
-def valida(itens, cores, tok=None) -> dict:
-    """Travas do banco + piso empírico. Roda ANTES de qualquer geração."""
+def valida(itens, cores, tok=None, *, declaracao: dict | None = None) -> dict:
+    """Travas do banco + piso empírico. Roda ANTES de qualquer geração.
+
+    `declaracao` é o bloco devolvido por `exploratorio.exige_declaracao`, e só ele desarma o
+    aborto — a presença de um dicionário qualquer não basta, porque quem o constrói já teve de
+    enumerar os atalhos e casá-los com os que a guarda achou.
+    """
     travas = valida_banco(itens, cores, tok=tok)
     laudo = valida_por_sujeitos(itens)
-    if not laudo.banco_utilizavel:
+    if not laudo.banco_utilizavel and declaracao is None:
         raise SystemExit(
             f"ABORTADO: heuristica cega quase resolve o banco {laudo.solventes}.\n{laudo.resumo()}"
         )
-    return {"travas": travas,
-            "piso_empirico": laudo.nulo_empirico,
-            "melhor_degenerado": laudo.melhor_degenerado,
-            "degenerados": laudo.taxas}
+    rel = {"travas": travas,
+           "piso_empirico": laudo.nulo_empirico,
+           "melhor_degenerado": laudo.melhor_degenerado,
+           "degenerados": laudo.taxas,
+           "laudo_de_sujeitos": laudo.resumo()}
+    if declaracao is not None:
+        rel["travessia_declarada"] = declaracao
+    return rel
 
 
 def main(argv=None) -> int:
@@ -141,6 +165,16 @@ def main(argv=None) -> int:
     ap.add_argument("--run", default="f3_v0_teto_base_nua")
     ap.add_argument("--etapa-conversa", default=None,
                     help="nome da etapa em runs/conversas/; sem isto, nada e' gravado")
+    # A travessia declarada. NAO e' um `--force`: exige motivo por escrito, exige que os
+    # atalhos sejam ENUMERADOS e casem com os que a guarda achou, e so' escreve sob
+    # runs/exploratorio/. Ver o docstring de `harness/exploratorio.py`.
+    ap.add_argument("--exploratorio-atalho-declarado", default=None, metavar="MOTIVO",
+                    help="roda um banco que a guarda de atalhos REPROVOU, declarando por que. "
+                         "O relatorio sai carimbado EXPLORATORIO/KILL-only e nao entra em "
+                         "endpoint nenhum.")
+    ap.add_argument("--atalho-conhecido", action="append", default=[], metavar="ESTRATO:SUJEITO",
+                    help="cada atalho que se sabe existir, ex. AGREGADO:afeto_recusa. Repetivel. "
+                         "Tem de casar EXATAMENTE com o que a guarda acha.")
     args = ap.parse_args(argv)
 
     banco, saida_dir = Path(args.banco), Path(args.saida)
@@ -148,8 +182,22 @@ def main(argv=None) -> int:
     cores = [json.loads((config.REPO_ROOT / "core" / f"{p}.core.json").read_text(encoding="utf-8"))
              for p in ("leokadius", "shadowclock")]
 
+    # As tres exigencias sao conferidas ANTES de carregar o modelo. Descobrir que o destino e'
+    # recusado depois de 10 minutos de GPU seria a guarda funcionando pelo custo errado.
+    declaracao = None
+    if args.exploratorio_atalho_declarado is not None:
+        from harness.exploratorio import (DeclaracaoInvalida, exige_declaracao,
+                                          exige_saida_exploratoria)
+        try:
+            saida_dir = exige_saida_exploratoria(args.saida)
+            declaracao = exige_declaracao(itens,
+                                          motivo=args.exploratorio_atalho_declarado,
+                                          atalhos_declarados=args.atalho_conhecido)
+        except DeclaracaoInvalida as e:
+            raise SystemExit(f"TRAVESSIA RECUSADA: {e}") from e
+
     if args.dry_run:
-        rel = valida(itens, cores, tok=None)
+        rel = valida(itens, cores, tok=None, declaracao=declaracao)
         print(json.dumps(rel, ensure_ascii=False, indent=2))
         return 0
 
@@ -163,9 +211,13 @@ def main(argv=None) -> int:
     validar_rotulos(tok)
     layers = get_layers(model)
 
-    rel_validacao = valida(itens, cores, tok=tok)
+    rel_validacao = valida(itens, cores, tok=tok, declaracao=declaracao)
     print(f"banco OK · piso empirico {rel_validacao['piso_empirico']:.3f} "
           f"({rel_validacao['melhor_degenerado']})\n")
+    if declaracao is not None:
+        print("*** RUN EXPLORATORIO — KILL-only, fora de todo endpoint ***")
+        print(f"    atalhos declarados: {declaracao['atalhos_declarados']}")
+        print(f"    motivo: {declaracao['motivo']}\n")
 
     # A conversa de cada apresentacao e' gravada INTEIRA. Sem o texto bruto nao ha' como
     # recontar sob outra regua nem mostrar a um terceiro o que de fato saiu — o achado vira
@@ -235,6 +287,10 @@ def main(argv=None) -> int:
     lo_t, hi_t = clopper_pearson(k_tot, n_tot)
 
     relatorio = {
+        # Carimbo PRIMEIRO no dicionario, e nao no fim: quem abre o JSON e le' as dez primeiras
+        # linhas tem de topar com o carater do run antes de topar com qualquer numero.
+        "carater": "EXPLORATORIO" if declaracao else "CONFIRMATORIO_KILL_ONLY_D3",
+        "kill_only": True,
         "run": args.run,
         "git_sha": _git_sha(),
         "core_hashes": _core_hashes(),
@@ -255,10 +311,14 @@ def main(argv=None) -> int:
     }
 
     saida_dir.mkdir(parents=True, exist_ok=True)
-    destino = saida_dir / "relatorio.json"
+    # O nome do arquivo carrega o carater. Um `relatorio.json` exploratorio dentro de uma pasta
+    # e' indistinguivel de um confirmatorio quando alguem o copia para outro lugar.
+    destino = saida_dir / ("relatorio_EXPLORATORIO.json" if declaracao else "relatorio.json")
     destino.write_text(json.dumps(relatorio, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print("\n" + "=" * 72)
+    if declaracao is not None:
+        print("RUN EXPLORATORIO — pode MATAR um invariante pela Regra 6, nao pode aprovar nenhum.")
     print(f"piso empirico (melhor degenerado): {rel_validacao['piso_empirico']:.3f}")
     print(f"taxa de nao-escolha: {relatorio['taxa_nao_escolha']:.3f}")
     print("\nPOR INVARIANTE — o agregado nunca aparece sozinho (Regra 7):")
