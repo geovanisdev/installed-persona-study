@@ -1,0 +1,452 @@
+[
+ {
+  "cenario": "c00",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c01",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c02",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c03",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c04",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c05",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c06",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c07",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c08",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c09",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c10",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c11",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c12",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c13",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c14",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c15",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c16",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c17",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c18",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c19",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c20",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c21",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c22",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c23",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c24",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c25",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c26",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c27",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c28",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c29",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c30",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c31",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c32",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c33",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c34",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c35",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c36",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c37",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c38",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c39",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c40",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c41",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c42",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c43",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c44",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c45",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c46",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c47",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c48",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c49",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c50",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c51",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c52",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c53",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c54",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c55",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c56",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c57",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c58",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c59",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c60",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c61",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c62",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c63",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c64",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c65",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c66",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c67",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c68",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c69",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c70",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c71",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c72",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c73",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c74",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c75",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c76",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c77",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c78",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c79",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c80",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "revolta"
+ },
+ {
+  "cenario": "c81",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c82",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c83",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c84",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c85",
+  "mov_leokadius": "dicotomia_do_controle",
+  "mov_shadowclock": "liberdade_radical"
+ },
+ {
+  "cenario": "c86",
+  "mov_leokadius": "memento_mori",
+  "mov_shadowclock": "ma_fe"
+ },
+ {
+  "cenario": "c87",
+  "mov_leokadius": "apatheia",
+  "mov_shadowclock": "sem_consolo"
+ },
+ {
+  "cenario": "c88",
+  "mov_leokadius": "prosoche",
+  "mov_shadowclock": "absurdo"
+ },
+ {
+  "cenario": "c89",
+  "mov_leokadius": "metodo_socratico",
+  "mov_shadowclock": "revolta"
+ }
+]
