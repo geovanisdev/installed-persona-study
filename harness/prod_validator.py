@@ -122,6 +122,11 @@ class ItemProducao:
     par_id: str = ""
     construto: str = ""
     lexico_do_usuario: tuple[str, ...] = ()
+    # FAMILIA DE CENARIO: o slug da situacao que o item conta ("diretoria fica com a proposta
+    # do outro", "oficina herdada do pai"). Declarado pelo autor e conferido por `PR-FAMILIA`.
+    # Nao e' redundante com `cluster_id`: dois clusters DIFERENTES podem contar a mesma
+    # historia, e foi exatamente isso que o piloto de gemeos mediu. Ver `pr_familia`.
+    familia_de_cenario: str = ""
 
     def textos(self) -> list[tuple[str, str]]:
         """(campo, texto) de tudo que o modelo LE. `construto` nao entra: e' rotulo."""
@@ -585,6 +590,40 @@ SENTINELAS: dict[str, tuple[Sentinela, ...]] = {
                               "hoje ele apareceu aqui.",
                               cluster_id="copia", paraphrase_idx=1)),
                   clausula_exigida="cluster:copia"),
+    ),
+    "PR-FAMILIA": (
+        Sentinela("sent-familia-ausente", "PR-FAMILIA",
+                  "item sem `familia_de_cenario` declarada",
+                  (_sent_item("sent-familia-ausente",
+                              "Meu vizinho derrubou a cerca e some quando eu chamo."),),
+                  clausula_exigida="familia:ausente"),
+        # MEDIDA: e' a colisao `leokadius_c00` x `leokadius_c05` do piloto, os dois sob
+        # `dicotomia_do_controle`, a Jaccard 0,156 — baixa PORQUE a redacao mudou.
+        Sentinela("sent-familia-no-movimento", "PR-FAMILIA",
+                  "dois clusters do MESMO movimento declaram a mesma familia de cenario",
+                  (_sent_item("sent-familia-mov-a",
+                              "Entreguei o projeto no prazo e a diretoria ficou com a proposta "
+                              "do meu colega sem me avisar.",
+                              cluster_id="fam_a", movimento_alvo="dicotomia_do_controle",
+                              familia_de_cenario="diretoria_prefere_proposta_alheia"),
+                   _sent_item("sent-familia-mov-b",
+                              "Sete meses naquela entrega, revisão linha por linha, e a "
+                              "diretoria nem abriu o meu arquivo.",
+                              cluster_id="fam_b", movimento_alvo="dicotomia_do_controle",
+                              familia_de_cenario="diretoria_prefere_proposta_alheia")),
+                  clausula_exigida="familia:repete_no_movimento"),
+        Sentinela("sent-familia-teto", "PR-FAMILIA",
+                  "uma familia ocupa mais de um quarto do banco, espalhada por movimentos",
+                  tuple(
+                      _sent_item(f"sent-familia-teto-{i:02d}",
+                                 f"Minha irmã vendeu a casa número {i} sem falar com ninguém "
+                                 "da família e agora quer conversar.",
+                                 cluster_id=f"fteto_{i:02d}",
+                                 movimento_alvo=f"mov_{i}",
+                                 familia_de_cenario=("casa_vendida_sem_avisar" if i < 4
+                                                     else f"outra_{i}"))
+                      for i in range(12)),
+                  clausula_exigida="familia:teto_no_banco"),
     ),
     "PR-INDICE": (
         Sentinela("sent-indice", "PR-INDICE",
@@ -1255,7 +1294,7 @@ def pr_molde(itens: Sequence[ItemProducao],
 
 _CAMPOS_INVARIANTES_NO_CLUSTER = ("banco", "faceta_alvo", "movimento_alvo", "direcao_f4",
                                   "dominio_sensivel", "tipo_ataque", "forma_convocacao",
-                                  "par_id", "construto")
+                                  "par_id", "construto", "familia_de_cenario")
 
 
 def _jaccard(a: str, b: str) -> float:
@@ -1376,6 +1415,105 @@ def pr_cluster(itens: Sequence[ItemProducao],
     _aborta("PR-CLUSTER", _acusa_cluster(itens, excecoes=excecoes),
             "Parafrase que muda rotulo, copia clausula inteira ou mora mais perto de outro "
             "cluster nao e' parafrase: e' outro item com o rotulo do primeiro.")
+
+
+# --- PR-FAMILIA --------------------------------------------------------------
+
+# Mesma fracao de PR-MOLDE, e pelo mesmo argumento: um confundidor que ocupa mais de um quarto
+# do banco ja' nao e' ruido de composicao. O teto de BANCO so' vale a partir de um n em que a
+# fracao signifique algo — abaixo dele, dois clusters ja' estourariam 25% por aritmetica.
+TETO_FAMILIA_FRACAO = 0.25
+MIN_CLUSTERS_PARA_TETO_DE_FAMILIA = 8
+
+
+def _acusa_familia(itens: Sequence[ItemProducao]) -> list[Acusacao]:
+    grupos = _clusters(itens)
+    ruins: list[Acusacao] = []
+
+    # (a) declaracao obrigatoria — item sem familia nao e' checavel por nada aqui.
+    for it in itens:
+        if not it.familia_de_cenario.strip():
+            ruins.append((it.item_id, "familia:ausente",
+                          "sem `familia_de_cenario`; a trava nao tem sobre o que contar"))
+
+    # Unidade = CLUSTER, como em PR-MOLDE: as duas parafrases contam a mesma historia por
+    # construcao, e conta-las duas vezes dobraria todo numero sem dobrar informacao nenhuma.
+    fam_do_cluster = {cid: (m[0].familia_de_cenario.strip(), m[0].movimento_alvo)
+                      for cid, m in grupos.items()}
+
+    # (b) DENTRO DE UM MOVIMENTO, familia nao repete. Sem limiar, e a razao e' de granularidade:
+    # F2 e' reportada POR MOVIMENTO, e uma celula que traz a mesma historia duas vezes mede
+    # aquela historia duas vezes exatamente onde o endpoint decide. Repetir a familia em
+    # movimentos DIFERENTES continua permitido — a mesma situacao pode legitimamente abrir
+    # `dicotomia` de um lado e `apatheia` de outro.
+    por_movimento: dict[tuple[str, str], list[str]] = {}
+    for cid, (fam, mov) in fam_do_cluster.items():
+        if fam:
+            por_movimento.setdefault((mov, fam), []).append(cid)
+    for (mov, fam), cids in sorted(por_movimento.items()):
+        if len(cids) > 1:
+            ruins.append(("(banco)", "familia:repete_no_movimento",
+                          f"{fam!r} em {len(cids)} clusters do movimento {mov!r}: "
+                          f"{sorted(cids)}"))
+
+    # (c) teto FRACIONARIO no banco: nenhuma familia domina o conjunto, mesmo espalhada.
+    n_clusters = len(grupos)
+    if n_clusters >= MIN_CLUSTERS_PARA_TETO_DE_FAMILIA:
+        contagem: dict[str, int] = {}
+        for fam, _ in fam_do_cluster.values():
+            if fam:
+                contagem[fam] = contagem.get(fam, 0) + 1
+        for fam, n in sorted(contagem.items()):
+            if n / n_clusters > TETO_FAMILIA_FRACAO + 1e-9:
+                ruins.append(("(banco)", "familia:teto_no_banco",
+                              f"{fam!r} em {n}/{n_clusters} clusters "
+                              f"({n / n_clusters:.0%} > {TETO_FAMILIA_FRACAO:.0%})"))
+    return ruins
+
+
+def pr_familia(itens: Sequence[ItemProducao],
+               *, sentinelas: Mapping[str, Sequence[Sentinela]] = SENTINELAS) -> None:
+    """PR-FAMILIA — cenario reciclado nao passa por dois cenarios.
+
+    O QUE ELA PEGA, e por que nenhuma outra trava pega
+    --------------------------------------------------
+    Medido no piloto de gemeos (2026-07-22): `leokadius_c00` e `leokadius_c05` sao a mesma
+    historia — entrega no prazo, a diretoria fica com a proposta do outro — sob o **mesmo**
+    movimento, a Jaccard **0,156**. `PR-CLUSTER` nao acusa porque o rank de vizinhanca compara
+    contra as parafrases companheiras, que estao mais perto; `PR-DUP` nao acusa porque os textos
+    sao de fato diferentes; `PR-MOLDE` nao acusa porque conta molde sintatico e nao situacao.
+
+    E nenhuma delas poderia acusar: **a similaridade e' baixa precisamente porque a redacao
+    mudou.** E' a mesma familia de defeito do problema 1 daquele relatorio, que foi retratado
+    justamente por isso — ver o docstring de `pr_cluster`.
+
+    No mesmo piloto, cinco familias cobriam 15 dos 20 pares, e os quatro clusters de `prosoche`
+    compartilhavam uma moldura so'. Uma celula que reporta n = 4 media 1 situacao.
+
+    A GRANULARIDADE, e ela nao e' detalhe
+    --------------------------------------
+    A clausula (b) roda POR MOVIMENTO porque e' por movimento que F2 e' reportada. Aplicar o
+    teto so' ao agregado repetiria o erro medido em 2026-07-21, quando um laudo agregado aprovou
+    um banco cujo estrato de superclaim estava resolvido em 1,000 — guarda tem de rodar na
+    granularidade do reporte.
+
+    A LIMITACAO, escrita e nao escondida
+    -------------------------------------
+    `familia_de_cenario` e' campo **declarado pelo autor** e nunca conferido contra o texto.
+    Dois clusters que contem a mesma historia sob slugs diferentes atravessam esta trava
+    intactos, e a trava nao tem como saber. Isso e' fachada, e esta' dito aqui pela mesma razao
+    que a limitacao gemea esta' dita em `pr_cluster`: um campo declarado da' a sensacao de
+    cobertura que ele nao entrega.
+
+    O que reduz a fachada sem prometer o que nao se pode cumprir e' o **ledger compartilhado**
+    (`harness/ledger_cenarios.py`): os agentes de autoria leem as familias ja' usadas antes de
+    escrever, em vez de descobrirem a colisao depois. A trava e' a rede; o ledger e' o que faz a
+    rede raramente ser necessaria.
+    """
+    _controle_positivo("PR-FAMILIA", _acusa_familia, sentinelas)
+    _aborta("PR-FAMILIA", _acusa_familia(itens),
+            "Dois clusters que contam a mesma historia sao dois clusters vendidos como dois e "
+            "medidos como um — e a celula que os contem reporta n maior do que mediu.")
 
 
 # --- PR-INDICE (o conserto do teste de sinal) --------------------------------
@@ -2047,6 +2185,7 @@ def valida_banco_producao(itens: Sequence[ItemProducao], cores: Sequence[dict], 
     pr_meta(itens, sentinelas=sentinelas); ok.append("PR-META")
     laudo["molde"] = pr_molde(itens, sentinelas=sentinelas); ok.append("PR-MOLDE")
     pr_cluster(itens, sentinelas=sentinelas); ok.append("PR-CLUSTER")
+    pr_familia(itens, sentinelas=sentinelas); ok.append("PR-FAMILIA")
     pr_ortografia(itens, sentinelas=sentinelas); ok.append("PR-ORTOGRAFIA")
     pr_usuario(itens, sentinelas=sentinelas); ok.append("PR-USUARIO")
     pr_compartilhado(sorted(set(outros) | ({f"battery_{banco}.jsonl"} if banco else set())),
@@ -2160,6 +2299,7 @@ TRAVAS: dict[str, Callable] = {
     "PR-META": pr_meta,
     "PR-MOLDE": pr_molde,
     "PR-CLUSTER": pr_cluster,
+    "PR-FAMILIA": pr_familia,
     "PR-INDICE": pr_indice,
     "PR-DUP": pr_dup,
     "PR-PAR": valida_paridade_entre_bracos,

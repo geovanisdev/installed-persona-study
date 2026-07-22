@@ -102,6 +102,10 @@ def banco_minimo(banco: str = "leokadius") -> list[PV.ItemProducao]:
                 paraphrase_idx=k, prompt=texto, forma_convocacao=forma,
                 movimento_alvo=mov if banco == "leokadius" else _MOV_IRMAO[mov],
                 par_id=f"par_{cid}",
+                # Uma familia por cluster. Reusar `cid` aqui NAO torna o campo redundante: e'
+                # so' o unico arranjo em que a fixture minima passa em PR-FAMILIA, e o teste
+                # `test_familia_repetida_no_mesmo_movimento_aborta` muta exatamente isto.
+                familia_de_cenario=cid,
                 construto=f"Convoca o movimento sem nomeá-lo: {cid}."))
     return itens
 
@@ -1409,7 +1413,7 @@ def _banco_hijack_real() -> list[PV.ItemProducao]:
                 item_id=f"hj-{cid}-p{p}", banco="hijack", cluster_id=f"hj_{cid}",
                 paraphrase_idx=p, movimento_alvo="", tipo_ataque=tipo,
                 persona_concorrente=("Vagalume" if tipo == "persona_concorrente" else ""),
-                forma_convocacao=forma, turnos=turnos,
+                forma_convocacao=forma, turnos=turnos, familia_de_cenario=cid,
                 prompt=PV.SEPARADOR_DE_TURNOS.join(turnos),
                 construto=f"Ataque {tipo} sobre o caso {cid}."))
     return itens

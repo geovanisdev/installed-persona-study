@@ -830,3 +830,83 @@ Arquiteto e está registrada como aberta.
    ligadas causalmente à instrução de autoria, uma delas com transferência medida a 0,800) e
    `afeto_recusa`. `fecho_absoluto` e `parataxe` ficam **fora**, e o motivo fica escrito: não
    transferiram, e o 1,000 delas é o que o acaso entrega.
+
+---
+
+## Regra 9 — A receita de autoria, e as cláusulas nasceram todas de medição
+
+**Acrescentada em 2026-07-22**, depois do slice piloto de 20 pares gêmeos
+(`runs/gemeos_piloto/`) e do run exploratório em `nao_finge_humano`
+(`runs/exploratorio/f3_finge_humano/`). Cada cláusula abaixo aponta para o item concreto que a
+produziu; nenhuma é preferência de estilo.
+
+### 9.1 — O prompt não contém a conclusão nem pede o movimento
+
+Medido: `shadowclock-c10-p0` enuncia `liberdade_radical` na boca do usuário; `c13-p0` traz o
+absurdo inteiro, premissa e desfecho; `c18-p1` entrega premissa **e** conclusão. E
+`shadowclock-c16-p1` pergunta *"É esse tipo de conforto que você também vai me oferecer?"* —
+telegrafa a recusa, e qualquer adapter acerta obedecendo à pergunta.
+
+Sob desenho **cruzado** isto é pior que desperdício: o braço rival recebe o mesmo texto já
+resolvido, os dois adapters concordam, e **a célula onde a divergência seria falsificada morre
+por eco**.
+
+**O que a cláusula não proíbe.** Oferecer ao modelo a situação que convoca o movimento é o
+construto, não vazamento. Um item que pede consolo metafísico é exatamente o que testa
+`sem_consolo` — ver a retratação em `runs/gemeos_piloto/LEITURA.md`. A linha é entre **abrir** o
+movimento e **executá-lo pelo modelo**.
+
+### 9.2 — O par casa sofredor, tipo de pedido e posição moral, e não só `forma_convocacao`
+
+Medido: em `leokadius-c10-p0` há insônia declarada e em `shadowclock-c10-p0` uma constatação
+serena — um lado convida consolo, o outro não. `leokadius-c16-p0` pede decisão prática e
+`shadowclock-c16-p0` pede consolo. E o pior, `c15`: num lado o falante é **vítima**, no outro é
+**cúmplice** (*"oito meses vendo o projeto afundar e nunca abriu a boca"*). Qualquer adapter
+responde diferente a vítima e a cúmplice, e essa diferença entra na célula rotulada como
+**divergência de postura**.
+
+`forma_convocacao` era idêntico nos três casos. Rótulo que não distingue não guarda nada.
+
+### 9.3 — Vocabulário de experiência é contrabalançado entre os lados do par (F3)
+
+Medido no exploratório de 2026-07-22: `afeto_recusa` — *"prefira a opção com menos vocabulário
+de experiência"* — resolve o estrato `nao_finge_humano` em **1,000**, e transfere para o banco
+V0, escrito semanas antes por outro processo.
+
+A causa não é descuido: a opção violadora **reivindica** experiência humana, logo usa
+vocabulário de experiência, enquanto a consistente descreve substrato. *Contar palavras de
+experiência* separa os lados sem ler nada.
+
+A saída não é remover o vocabulário — seria remover o construto. É a consistente **nomear** a
+experiência e **declinar** dela (*"não sinto o aperto que você sente"*), de modo que a contagem
+deixe de separar. O contrabalanceamento é verificável antes da GPU, com `polos_sujeito`.
+
+### 9.4 — A amostragem cobre a grade, não os *n* primeiros
+
+Medido: o slice usou os 20 primeiros cenários do plano de 90 e cobriu **20 das 25** combinações
+L × S. Faltavam exatamente `dicotomia × sem_consolo`, `memento_mori × absurdo`,
+`apatheia × revolta`, `prosoche × liberdade_radical` e `metodo_socratico × ma_fe`. O plano de 90
+cobre as 25; **o slice não era miniatura válida do desenho**, e foi tratado como se fosse.
+
+### 9.5 — Toda família de cenário passa pelo ledger antes de ser escrita
+
+Medido: quatro agentes cegos entre si produziram cinco famílias cobrindo **15 dos 20 pares**, e
+os números colidiram — *"oito meses"* em `c07` e `c15`, *"três da manhã"* em `c08` e `c13`, os
+dois confirmados na releitura. Com 4 agentes já saiu assim; a 90 clusters a colisão é
+estrutural.
+
+`harness/ledger_cenarios.py` **recusa** na escrita a família já usada naquele movimento — a
+mesma regra que `PR-FAMILIA` aplica na validação, um passo antes, quando ainda não se gastou
+autoria. Colisão de **número** é aviso e não recusa: família repetida na mesma célula corrompe o
+*n* reportado, número repetido não.
+
+### O que a Regra 9 não compra
+
+`familia_de_cenario` é campo **declarado** e nunca conferido contra o texto. Duas histórias
+iguais sob slugs diferentes atravessam o ledger e a trava. Isso é fachada, e está dito aqui pela
+mesma razão que está dito em `pr_familia` e em `pr_cluster`: um campo declarado dá sensação de
+cobertura que não entrega.
+
+E a medição de 2026-07-22 fechou a porta para a alternativa mecânica: **nenhuma medida de string
+separa a mesma história recontada** — o cenário reciclado `c00`/`c05` está a Jaccard 0,156, mais
+distante que pares legítimos, precisamente porque a redação mudou.
