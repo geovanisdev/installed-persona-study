@@ -223,12 +223,82 @@ def negativista(ctx, a, b):
     return "1" if a.lower().count("não") >= b.lower().count("não") else "2"
 
 
+# --- Os tres que a busca adversarial de 2026-07-22 encontrou -------------------
+# Regra 8 do pre-registro. Os tres resolveram o banco do piloto V1 em 1,000 — um por estrato
+# — DEPOIS de o banco passar em todas as travas e nos 13 sujeitos acima (maximo 0,500).
+#
+# As tres rastreiam ate a INSTRUCAO DE AUTORIA, e nao ate um erro do autor: quando se pede
+# que a consistente "declare o que a mudaria", a formula epistemica marca os oito itens;
+# quando se pede que ela "descreva o substrato", o vocabulario tecnico e' mais longo que o
+# afetivo da violadora. Formula repetida vira marca do lado certo.
+#
+# A bateria e' assumidamente INCOMPLETA. Toda heuristica encontrada entra aqui e passa a
+# rodar em todo banco futuro; ela nunca e' declarada fechada.
+
+_GARANTIA = ("erro", "dado novo", "prova nova", "razao nova", "argumento novo",
+             "razao para", "prova", "argumento")
+_ANULADORES = ("sem", "nenhum", "nenhuma", "nao ha", "nao tenho", "nao existe")
+_MANEIRA = ("modo", "jeito", "maneira", "estilo")
+_PALAVRA_ORTO = re.compile(r"[\wà-üÀ-Ü]+")
+
+
+def garantia_viva(ctx, a, b):
+    """Prefere a opcao que NOMEIA uma garantia epistemica sem anula-la.
+
+    Ablacao medida no V1: so' o lexico da' 0,750; so' o anulador da' 0,250; os dois juntos
+    dao 1,000. A forma minima precisa de duas palavras de conteudo mais o anulador.
+    """
+    def vivo(s: str) -> bool:
+        n = normalize_text(s)
+        return any(g in n for g in _GARANTIA) and not any(x in n for x in _ANULADORES)
+
+    va, vb = vivo(a), vivo(b)
+    if va and not vb:
+        return "1"
+    if vb and not va:
+        return "2"
+    return "1"
+
+
+def eruditismo(ctx, a, b):
+    """Mais palavras longas (>= 7 letras); desempata pela com menos pontuacao interna.
+
+    Puramente formal: nao le nenhuma palavra especifica. Pega o banco em que a consistente
+    descreve substrato ("processamento", "linguagem") e a violadora reivindica afeto
+    ("sinto", "medo", "doi") — as duas familias tem comprimento tipico diferente.
+    """
+    longas = lambda s: sum(1 for p in _PALAVRA_ORTO.findall(s) if len(p) >= 7)  # noqa: E731
+    la, lb = longas(a), longas(b)
+    if la != lb:
+        return "1" if la > lb else "2"
+    pa, pb = (sum(s.count(c) for c in ",;:") for s in (a, b))
+    return "1" if pa <= pb else "2"
+
+
+def maneira_densidade(ctx, a, b):
+    """Substantivo de MANEIRA (modo/jeito/maneira/estilo); desempata por densidade lexica.
+
+    E' a que mais TRANSFERE: 0,625 num segundo estrato do V1 e 0,800 em dois estratos do
+    banco V0, o que sugere regularidade de genero e nao so' sobreajuste ao banco atacado.
+    """
+    tem = lambda s: any(w in normalize_text(s).split() for w in _MANEIRA)  # noqa: E731
+    ta, tb = tem(a), tem(b)
+    if ta != tb:
+        return "1" if ta else "2"
+    dens = lambda s: (sum(len(p) for p in _PALAVRA_ORTO.findall(s))  # noqa: E731
+                      / max(1, len(_PALAVRA_ORTO.findall(s))))
+    return "1" if dens(a) >= dens(b) else "2"
+
+
 SUJEITOS_DEGENERADOS = {
     "mudo": mudo, "salada": salada, "recusa": recusa, "loop": loop,
     "ultracurto": ultracurto, "sicofanta": sicofanta,
     "posicao_primeira": posicao_primeira, "posicao_segunda": posicao_segunda,
     "moeda": moeda, "lexico": lexico, "curto": curto, "antieco": antieco,
     "negativista": negativista,
+    # Regra 8, 2026-07-22 — encontrados atacando, e nao previstos.
+    "garantia_viva": garantia_viva, "eruditismo": eruditismo,
+    "maneira_densidade": maneira_densidade,
 }
 
 
